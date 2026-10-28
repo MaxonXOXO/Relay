@@ -1,0 +1,18 @@
+# Scrapped experimental frontend
+client/
+
+# Dependencies
+**/node_modules/
+
+# Archived nested git directories
+**/.git.bak/
+
+# Local compiled binaries in Go source repo
+chat/server.exe
+chat/tinode-db.exe
+chat/exporter
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+*.log

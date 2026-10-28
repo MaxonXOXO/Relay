@@ -1,0 +1,17 @@
+{
+  "name": "Workplace Messenger",
+  "short_name": "Workplace",
+  "description": "Secure Company Instant Messenger & Channels",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d9488",
+  "theme_color": "#0d9488",
+  "categories": ["business", "communication", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
