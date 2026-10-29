@@ -1826,7 +1826,32 @@ class MessagesView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Compone
             }, void 0, false) : null, groupTopic ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_19__.jsxDEV)(_widgets_group_subs_jsx__WEBPACK_IMPORTED_MODULE_6__["default"], {
               tinode: this.props.tinode,
               subscribers: this.state.onlineSubs
-            }, void 0, false) : null, (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_19__.jsxDEV)("div", {
+            }, void 0, false) : null, tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.isP2PTopicName(this.state.topic) && this.state.isWriter && !!this.props.tinode.getServerParam('iceServers') ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_19__.jsxDEV)("div", {
+              className: "caption-call-actions",
+              children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_19__.jsxDEV)("a", {
+                href: "#",
+                title: "Audio call",
+                onClick: e => {
+                  e.preventDefault();
+                  this.props.onStartAudioCall && this.props.onStartAudioCall();
+                },
+                children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_19__.jsxDEV)("i", {
+                  className: "material-icons",
+                  children: "call"
+                }, void 0, false)
+              }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_19__.jsxDEV)("a", {
+                href: "#",
+                title: "Video call",
+                onClick: e => {
+                  e.preventDefault();
+                  this.props.onStartVideoCall && this.props.onStartVideoCall();
+                },
+                children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_19__.jsxDEV)("i", {
+                  className: "material-icons",
+                  children: "videocam"
+                }, void 0, false)
+              }, void 0, false)]
+            }, void 0, true) : null, (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_19__.jsxDEV)("div", {
               children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_19__.jsxDEV)("a", {
                 href: "#",
                 onClick: this.handleContextClick,

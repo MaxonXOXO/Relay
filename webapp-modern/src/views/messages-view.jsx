@@ -1893,6 +1893,16 @@ class MessagesView extends React.Component {
                   subscribers={this.state.onlineSubs} /> :
                 null
               }
+              {Tinode.isP2PTopicName(this.state.topic) && this.state.isWriter && !!this.props.tinode.getServerParam('iceServers') ?
+                <div className="caption-call-actions">
+                  <a href="#" title="Audio call" onClick={(e) => {e.preventDefault(); this.props.onStartAudioCall && this.props.onStartAudioCall();}}>
+                    <i className="material-icons">call</i>
+                  </a>
+                  <a href="#" title="Video call" onClick={(e) => {e.preventDefault(); this.props.onStartVideoCall && this.props.onStartVideoCall();}}>
+                    <i className="material-icons">videocam</i>
+                  </a>
+                </div> : null
+              }
               <div>
                 <a href="#" onClick={this.handleContextClick}>
                   <i className="material-icons">more_vert</i>

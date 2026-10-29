@@ -2343,6 +2343,8 @@ class TinodeWeb extends React.Component {
               callAudioOnly={this.state.callAudioOnly}
               onCallHangup={this.handleCallHangup}
               onAcceptCall={this.handleCallAccept}
+              onStartAudioCall={this.handleStartAudioCall}
+              onStartVideoCall={this.handleStartVideoCall}
 
               onCallInvite={this.handleCallInvite}
               onCallSendOffer={this.handleCallSendOffer}

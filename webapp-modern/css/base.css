@@ -2032,6 +2032,13 @@ img.channel {
   color: var(--clr-primary-accent);
 }
 
+#topic-caption-panel .caption-call-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: 0.15rem;
+}
+
 #topic-caption-panel .avatar-box {
   position: relative;
   width: 2.85rem;
