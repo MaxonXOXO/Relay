@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: relay-mysql
+    restart: always
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+    security_opt:
+      - seccomp=unconfined
+
+  relay:
+    image: tinode/tinode-mysql:latest
+    container_name: relay-server
+    hostname: relay-server
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "6060:6060"
+    volumes:
+      - ./tinode-server/tinode.docker.conf:/etc/tinode/tinode.conf:ro
+      - ./webapp-modern:/opt/tinode/static-relay
+      - relay_uploads:/opt/tinode/uploads
+    environment:
+      - EXT_CONFIG=/etc/tinode/tinode.conf
+      - EXT_STATIC_DIR=/opt/tinode/static-relay
+      - WAIT_FOR=mysql:3306
+      - RESET_DB=${RESET_DB:-false}
+      - UPGRADE_DB=${UPGRADE_DB:-false}
+
+volumes:
+  mysql_data:
+  relay_uploads:

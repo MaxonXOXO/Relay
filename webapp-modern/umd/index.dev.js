@@ -4680,20 +4680,29 @@ class NewTopicView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Compone
   }
   handleSearchContacts(query) {
     query = query.trim() || tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.DEL_CHAR;
-    if (!/[\s,:]/.test(query) && query != tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.DEL_CHAR) {
-      const email = (0,_lib_utils_js__WEBPACK_IMPORTED_MODULE_8__.asEmail)(query);
-      if (email) {
-        query = `${tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.TAG_EMAIL}${email}`;
-      } else {
-        const tel = (0,_lib_utils_js__WEBPACK_IMPORTED_MODULE_8__.asPhone)(query);
-        if (tel) {
-          query = `${tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.TAG_PHONE}${tel}`;
-        } else {
-          if (query[0] == '@') {
-            query = query.substring(1);
+    if (query != tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.DEL_CHAR) {
+      const parts = query.split(',').map(p => p.trim()).filter(Boolean);
+      const expanded = [];
+      parts.forEach(part => {
+        if (!/[\s:]/.test(part)) {
+          const email = (0,_lib_utils_js__WEBPACK_IMPORTED_MODULE_8__.asEmail)(part);
+          if (email) {
+            expanded.push(`${tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.TAG_EMAIL}${email}`);
+          } else {
+            const tel = (0,_lib_utils_js__WEBPACK_IMPORTED_MODULE_8__.asPhone)(part);
+            if (tel) {
+              expanded.push(`${tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.TAG_PHONE}${tel}`);
+            } else {
+              const clean = part[0] == '@' ? part.substring(1) : part;
+              expanded.push(`${tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.TAG_ALIAS}${clean},${clean}`);
+            }
           }
-          query = `${tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.TAG_ALIAS}${query},${query}`;
+        } else {
+          expanded.push(part);
         }
+      });
+      if (expanded.length > 0) {
+        query = expanded.join(',');
       }
     }
     this.props.onSearchContacts(query);
@@ -11638,6 +11647,7 @@ class SearchContacts extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
     this.handleSearch = this.handleSearch.bind(this);
     this.handleClear = this.handleClear.bind(this);
     this.handleKeyDown = this.handleKeyDown.bind(this);
+    this.handlePickContacts = this.handlePickContacts.bind(this);
   }
   componentWillUnmount() {
     if (this.state.edited) {
@@ -11679,7 +11689,50 @@ class SearchContacts extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
       this.handleClear(e);
     }
   }
+  async handlePickContacts(e) {
+    e.preventDefault();
+    if (!('contacts' in navigator && 'ContactsManager' in window)) {
+      return;
+    }
+    try {
+      const supported = await navigator.contacts.getProperties();
+      const props = ['tel', 'email'].filter(p => supported.includes(p));
+      if (props.length === 0) {
+        return;
+      }
+      const picked = await navigator.contacts.select(props, {
+        multiple: true
+      });
+      if (!picked || picked.length === 0) {
+        return;
+      }
+      const terms = [];
+      picked.forEach(c => {
+        if (Array.isArray(c.tel)) {
+          c.tel.forEach(t => {
+            const clean = t.replace(/[\s\-()]/g, '');
+            if (clean) terms.push(clean);
+          });
+        }
+        if (Array.isArray(c.email)) {
+          c.email.forEach(em => {
+            const clean = em.trim();
+            if (clean) terms.push(clean);
+          });
+        }
+      });
+      if (terms.length > 0) {
+        const query = terms.join(', ');
+        this.setState({
+          search: query,
+          edited: true
+        });
+        this.props.onSearchContacts(query);
+      }
+    } catch (_) {}
+  }
   render() {
+    const canPickContacts = typeof navigator !== 'undefined' && 'contacts' in navigator && typeof window !== 'undefined' && 'ContactsManager' in window;
     return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
       className: "panel-form",
       children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
@@ -11699,6 +11752,7 @@ class SearchContacts extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
         }, void 0, false), this.state.search ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("a", {
           href: "#",
           onClick: this.handleClear,
+          title: "Clear",
           children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("i", {
             className: "material-icons",
             children: "highlight_off"
@@ -11708,7 +11762,18 @@ class SearchContacts extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
             className: "material-icons",
             children: "\xA0"
           }, void 0, false)
-        }, void 0, false)]
+        }, void 0, false), canPickContacts ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("a", {
+          href: "#",
+          onClick: this.handlePickContacts,
+          title: "Find from phone contacts",
+          style: {
+            marginLeft: '4px'
+          },
+          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("i", {
+            className: "material-icons",
+            children: "contacts"
+          }, void 0, false)
+        }, void 0, false) : null]
       }, void 0, true)
     }, void 0, false);
   }

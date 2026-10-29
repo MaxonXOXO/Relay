@@ -62,23 +62,29 @@ class NewTopicView extends React.Component {
 
   handleSearchContacts(query) {
     query = query.trim() || Tinode.DEL_CHAR;
-    if (!/[\s,:]/.test(query) && query != Tinode.DEL_CHAR) {
-      // No colons, spaces or commas, not DEL char. Try as email, phone, or alias.
-      const email = asEmail(query);
-      if (email) {
-        query = `${Tinode.TAG_EMAIL}${email}`;
-      } else {
-        const tel = asPhone(query);
-        if (tel) {
-          query = `${Tinode.TAG_PHONE}${tel}`;
-        } else {
-          if (query[0] == '@') {
-            // Strip the leading '@' sign if present.
-            query = query.substring(1);
+    if (query != Tinode.DEL_CHAR) {
+      const parts = query.split(',').map(p => p.trim()).filter(Boolean);
+      const expanded = [];
+      parts.forEach(part => {
+        if (!/[\s:]/.test(part)) {
+          const email = asEmail(part);
+          if (email) {
+            expanded.push(`${Tinode.TAG_EMAIL}${email}`);
+          } else {
+            const tel = asPhone(part);
+            if (tel) {
+              expanded.push(`${Tinode.TAG_PHONE}${tel}`);
+            } else {
+              const clean = part[0] == '@' ? part.substring(1) : part;
+              expanded.push(`${Tinode.TAG_ALIAS}${clean},${clean}`);
+            }
           }
-          // 'alice' -> 'alias:alice,alice'
-          query = `${Tinode.TAG_ALIAS}${query},${query}`;
+        } else {
+          expanded.push(part);
         }
+      });
+      if (expanded.length > 0) {
+        query = expanded.join(',');
       }
     }
     this.props.onSearchContacts(query);
