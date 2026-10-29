@@ -1,18 +1,16 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
     container_name: relay-mysql
     restart: always
+    command:
+      - --innodb-buffer-pool-size=64M
+      - --performance-schema=OFF
+      - --max-connections=100
     volumes:
       - mysql_data:/var/lib/mysql
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      timeout: 5s
-      retries: 10
     security_opt:
       - seccomp=unconfined
 
@@ -22,8 +20,7 @@ services:
     hostname: relay-server
     restart: always
     depends_on:
-      mysql:
-        condition: service_healthy
+      - mysql
     ports:
       - "6060:6060"
     volumes:
