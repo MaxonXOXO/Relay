@@ -55,9 +55,14 @@ class WallpapersView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
       if (!this.hasChanged()) {
         return;
       }
-      type = _config_js__WEBPACK_IMPORTED_MODULE_3__.WALLPAPER_DEFAULTS.type;
-      index = _config_js__WEBPACK_IMPORTED_MODULE_3__.WALLPAPER_DEFAULTS.index;
-      blur = 0;
+      this.setState({
+        tab: 'patt',
+        wallpaper: 'chat-wallpaper-light.svg',
+        selectedType: 'default',
+        blur: 0
+      });
+      this.props.onWallpaperSelected('../img/chat-wallpaper-light.svg', 0, 0);
+      return;
     } else {
       e.preventDefault();
       type = this.state.tab;
@@ -85,7 +90,7 @@ class WallpapersView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
     }
   }
   hasChanged() {
-    return this.state.selectedType != _config_js__WEBPACK_IMPORTED_MODULE_3__.WALLPAPER_DEFAULTS.type || this.state.wallpaper != _img_bkg_index_json__WEBPACK_IMPORTED_MODULE_5__[_config_js__WEBPACK_IMPORTED_MODULE_3__.WALLPAPER_DEFAULTS.type][_config_js__WEBPACK_IMPORTED_MODULE_3__.WALLPAPER_DEFAULTS.index].name || this.state.blur != 0;
+    return this.state.wallpaper && !this.state.wallpaper.startsWith('chat-wallpaper-') && this.state.wallpaper !== 'a00.png' || this.state.blur != 0;
   }
   render() {
     return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {

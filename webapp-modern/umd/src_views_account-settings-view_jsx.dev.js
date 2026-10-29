@@ -272,7 +272,6 @@ class AccountSettingsView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].
           className: "flat-button",
           onClick: e => {
             e.preventDefault();
-            this.props.onNavigate('support');
           },
           children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("i", {
             className: "material-icons",

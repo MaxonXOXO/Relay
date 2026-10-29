@@ -14,6 +14,7 @@ import AccNotificationsView from './acc-notifications-view.jsx';
 const AccSecurityView = React.lazy(_ => import('./acc-security-view.jsx'));
 import AccSupportView from './acc-support-view.jsx';
 import LoginView from './login-view.jsx';
+import OnboardingView from './onboarding-view.jsx';
 import NewTopicView from './new-topic-view.jsx';
 const PasswordResetView = React.lazy(_ => import('./password-reset-view.jsx'));
 import SettingsView from './settings-view.jsx';
@@ -22,6 +23,11 @@ const WallpapersView = React.lazy(_ => import('./wallpapers.jsx'));
 
 // Panel titles for translation.
 const messages = defineMessages({
+  onboarding: {
+    id: 'sidepanel_title_onboarding',
+    description: 'Sidepanel title for OnboardingView.',
+    defaultMessage: 'Relay'
+  },
   login: {
     id: 'sidepanel_title_login',
     description: 'Sidepanel title for LoginView.',
@@ -117,7 +123,7 @@ class SidepanelView extends React.PureComponent {
 
   render() {
     const {formatMessage} = this.props.intl;
-    const view = this.props.state || (this.props.myUserId ? 'contacts' : 'login');
+    const view = this.props.state || (this.props.myUserId ? 'contacts' : 'onboarding');
 
     let title, avatar, badges;
     if (view == 'contacts') {
@@ -125,13 +131,13 @@ class SidepanelView extends React.PureComponent {
       avatar = this.props.avatar ? this.props.avatar : true;
       badges = this.props.trustedBadges;
     } else {
-      title = formatMessage(messages[view]);
+      title = messages[view] ? formatMessage(messages[view]) : 'Relay';
       avatar = false;
       badges = null;
     }
 
     let onCancel;
-    if (['login', 'contacts'].indexOf(view) == -1) {
+    if (['onboarding', 'contacts'].indexOf(view) == -1) {
       onCancel = this.props.onCancel;
     }
 
@@ -161,7 +167,12 @@ class SidepanelView extends React.PureComponent {
 
         <LoadSpinner show={this.props.loadSpinnerVisible} />
 
-        {view === 'login' ?
+        {view === 'onboarding' ?
+          <OnboardingView
+            onGetStarted={() => this.props.onNavigate('login')}
+            onCreateAccount={this.props.onSignUp} /> :
+
+          view === 'login' ?
           <LoginView
             login={this.props.login}
             disabled={this.props.loginDisabled}

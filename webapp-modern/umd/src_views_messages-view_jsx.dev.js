@@ -13,42 +13,68 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-intl */ "./src/lib/react-intl-compat.js");
-/* harmony import */ var tinode_sdk__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! tinode-sdk */ "tinode-sdk");
-/* harmony import */ var tinode_sdk__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(tinode_sdk__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _config_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../config.js */ "./src/config.js");
-/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-dev-runtime */ "./node_modules/react/jsx-dev-runtime.js");
-
+/* harmony import */ var _config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../config.js */ "./src/config.js");
+/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react/jsx-dev-runtime */ "./node_modules/react/jsx-dev-runtime.js");
 
 
 
 
 class LogoView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureComponent {
   render() {
-    const version = _config_js__WEBPACK_IMPORTED_MODULE_3__.APP_NAME + ' (' + tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.getLibrary() + ')';
-    return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("div", {
+    return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
       id: "dummy-view",
-      children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("div", {
-        children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("a", {
-          href: "https://github.com/tinode/chat/",
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("img", {
+      children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
+        className: "relay-lounge-card",
+        children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
+          className: "relay-lounge-brand",
+          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("img", {
             id: "logo",
-            alt: "logo",
+            alt: "Relay",
             src: "img/logo.svg"
-          }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("h2", {
-            children: "Tinode Web"
+          }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("h2", {
+            children: "Relay"
           }, void 0, false)]
-        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("p", {
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-            id: "label_client",
-            defaultMessage: "Client:",
-            description: "Label for a client version"
-          }, void 0, false), " ", version]
-        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("p", {
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-            id: "label_server",
-            defaultMessage: "Server:",
-            description: "Label for a server version"
-          }, void 0, false), " ", this.props.serverVersion, " (", this.props.serverAddress, ")"]
+        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("p", {
+          className: "relay-lounge-tagline",
+          children: "Send and receive messages in real time, share files, and start HD voice & video calls right from your browser."
+        }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
+          className: "relay-lounge-features",
+          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("span", {
+            className: "relay-lounge-pill",
+            children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("i", {
+              className: "material-icons",
+              children: "bolt"
+            }, void 0, false), " Instant Sync"]
+          }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("span", {
+            className: "relay-lounge-pill",
+            children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("i", {
+              className: "material-icons",
+              children: "videocam"
+            }, void 0, false), " WebRTC Calls"]
+          }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("span", {
+            className: "relay-lounge-pill",
+            children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("i", {
+              className: "material-icons",
+              children: "lock"
+            }, void 0, false), " Private & Fast"]
+          }, void 0, true)]
+        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
+          className: "relay-lounge-meta",
+          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("span", {
+            children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+              id: "label_client",
+              defaultMessage: "Client:",
+              description: "Label for a client version"
+            }, void 0, false), " ", _config_js__WEBPACK_IMPORTED_MODULE_2__.APP_NAME]
+          }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("span", {
+            children: "•"
+          }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("span", {
+            children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+              id: "label_server",
+              defaultMessage: "Server:",
+              description: "Label for a server version"
+            }, void 0, false), " ", this.props.serverAddress]
+          }, void 0, true)]
         }, void 0, true)]
       }, void 0, true)
     }, void 0, false);
@@ -2071,6 +2097,14 @@ class BaseChatMessage extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Pure
     this.handleFormButtonClick = this.handleFormButtonClick.bind(this);
     this.handleQuoteClick = this.handleQuoteClick.bind(this);
     this.handleContextClick = this.handleContextClick.bind(this);
+    this.handleTouchStart = this.handleTouchStart.bind(this);
+    this.handleTouchMove = this.handleTouchMove.bind(this);
+    this.handleTouchEnd = this.handleTouchEnd.bind(this);
+    this.handleTouchCancel = this.handleTouchCancel.bind(this);
+    this.openContextMenu = this.openContextMenu.bind(this);
+    this.lastMenuOpenedAt = 0;
+    this.touch = null;
+    this.longPressTimer = null;
     this.handleCancelUpload = this.handleCancelUpload.bind(this);
     this.handleDraftyClick = this.handleDraftyClick.bind(this);
     this.formatterContext = {
@@ -2159,6 +2193,59 @@ class BaseChatMessage extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Pure
   handleContextClick(e) {
     e.preventDefault();
     e.stopPropagation();
+    if (Date.now() - this.lastMenuOpenedAt < 600) {
+      return;
+    }
+    this.openContextMenu(e.pageX, e.pageY);
+  }
+  handleTouchStart(e) {
+    if (e.touches.length != 1) {
+      return;
+    }
+    const t = e.touches[0];
+    this.touch = {
+      x: t.pageX,
+      y: t.pageY,
+      dx: 0,
+      dy: 0
+    };
+    clearTimeout(this.longPressTimer);
+    this.longPressTimer = setTimeout(_ => {
+      if (this.touch) {
+        const {
+          x,
+          y
+        } = this.touch;
+        this.touch = null;
+        this.openContextMenu(x, y);
+      }
+    }, 500);
+  }
+  handleTouchMove(e) {
+    if (!this.touch) {
+      return;
+    }
+    const t = e.touches[0];
+    this.touch.dx = t.pageX - this.touch.x;
+    this.touch.dy = t.pageY - this.touch.y;
+    if (Math.abs(this.touch.dx) > 10 || Math.abs(this.touch.dy) > 10) {
+      clearTimeout(this.longPressTimer);
+    }
+  }
+  handleTouchEnd() {
+    clearTimeout(this.longPressTimer);
+    const touch = this.touch;
+    this.touch = null;
+    if (touch && touch.dx > 70 && Math.abs(touch.dy) < 30) {
+      this.openContextMenu(touch.x, touch.y);
+    }
+  }
+  handleTouchCancel() {
+    clearTimeout(this.longPressTimer);
+    this.touch = null;
+  }
+  openContextMenu(x, y) {
+    this.lastMenuOpenedAt = Date.now();
     const menuItems = [];
     if (this.props.received == tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.MESSAGE_STATUS_FAILED) {
       menuItems.push('menu_item_send_retry');
@@ -2194,8 +2281,8 @@ class BaseChatMessage extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Pure
       content: this.props.content,
       userFrom: this.props.userFrom,
       userName: this.props.userName,
-      y: e.pageY,
-      x: e.pageX,
+      y: y,
+      x: x,
       pickReply: this.props.pickReply,
       editMessage: this.props.editMessage,
       timestamp: this.props.timestamp
@@ -2266,6 +2353,11 @@ class BaseChatMessage extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Pure
     return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("li", {
       ref: this.props.innerRef,
       className: sideClass,
+      onContextMenu: this.props.showContextMenu ? this.handleContextClick : undefined,
+      onTouchStart: this.props.showContextMenu ? this.handleTouchStart : undefined,
+      onTouchMove: this.props.showContextMenu ? this.handleTouchMove : undefined,
+      onTouchEnd: this.props.showContextMenu ? this.handleTouchEnd : undefined,
+      onTouchCancel: this.props.showContextMenu ? this.handleTouchCancel : undefined,
       children: [this.props.isGroup && this.props.response ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
         className: "avatar-box",
         children: fullDisplay ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)(_letter_tile_jsx__WEBPACK_IMPORTED_MODULE_4__["default"], {
@@ -2277,7 +2369,7 @@ class BaseChatMessage extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Pure
       }, void 0, false) : null, (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
         children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
           className: bubbleClass,
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
+          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
             className: "content-meta",
             children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
               className: textSizeClass,
@@ -2287,18 +2379,8 @@ class BaseChatMessage extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Pure
               timestamp: this.props.timestamp,
               received: this.props.received
             }, void 0, false) : null]
-          }, void 0, true), this.props.showContextMenu ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("span", {
-            className: "menuTrigger",
-            children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("a", {
-              href: "#",
-              onClick: this.handleContextClick,
-              children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("i", {
-                className: "material-icons",
-                children: "expand_more"
-              }, void 0, false)
-            }, void 0, false)
-          }, void 0, false) : null]
-        }, void 0, true), fullDisplay ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
+          }, void 0, true)
+        }, void 0, false), fullDisplay ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
           className: "author",
           children: this.props.userName || (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("i", {
             children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {

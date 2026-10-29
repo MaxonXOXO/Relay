@@ -1,9 +1,9 @@
 import { PACKAGE_VERSION } from './version.js';
 
 // Version-independent name of this application, used for Firebase app name.
-export const BASE_APP_NAME = 'TinodeWeb';
+export const BASE_APP_NAME = 'Relay';
 // Name of this application, used in the User-Agent.
-export const APP_NAME = BASE_APP_NAME + '/' + (PACKAGE_VERSION || '0.25');
+export const APP_NAME = BASE_APP_NAME + '/' + (PACKAGE_VERSION || '1.0');
 
 // API key. Use https://github.com/tinode/chat/tree/master/keygen to generate your own
 export const API_KEY = 'AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K';
@@ -116,13 +116,13 @@ export const MIN_DURATION = 2_000;
 export const MAX_DURATION = 600_000;
 
 // Link for "Contact Us".
-export const LINK_CONTACT_US = 'mailto:support@tinode.co';
+export const LINK_CONTACT_US = '#';
 
 // Link to Privacy Policy.
-export const LINK_PRIVACY_POLICY = 'https://tinode.co/privacy.html';
+export const LINK_PRIVACY_POLICY = '#';
 
 // Link to Terms of Service.
-export const LINK_TERMS_OF_SERVICE = 'https://tinode.co/terms.html';
+export const LINK_TERMS_OF_SERVICE = '#';
 
 // When user starts a P2P topic, automatic subscription does not
 // happen until the first message. Setting this option to true enables

@@ -17,7 +17,7 @@ export function updateFavicon(count) {
   }
   head.appendChild(newIcon);
 
-  document.title = (count > 0 ? '('+count+') ' : '') + 'Tinode';
+  document.title = (count > 0 ? '('+count+') ' : '') + 'Relay';
 }
 
 // Create theCard which represents user's or topic's "public" info.
@@ -250,9 +250,7 @@ export function cancelablePromise(promise) {
 };
 
 export function defaultWallpaper() {
-  const wallpaperIndex = require('../../img/bkg/index.json');
-  const wp = wallpaperIndex[WALLPAPER_DEFAULTS.type][WALLPAPER_DEFAULTS.index];
-  return {name: `../${WALLPAPER_DEFAULTS.path}${wp.name}`, size: wp.size};
+  return {name: '../img/chat-wallpaper-light.svg', size: 0};
 }
 
 export function wallpaperNameFromUrl(wallpaperUrl) {

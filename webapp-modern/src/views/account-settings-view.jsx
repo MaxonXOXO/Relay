@@ -161,7 +161,7 @@ export default class AccountSettingsView extends React.Component {
             <i className="material-icons">security</i>&nbsp;<FormattedMessage id="button_security"
               defaultMessage="Security" description="Navigaton button for security panel." />
           </a>
-          <a href="#" className="flat-button" onClick={e => {e.preventDefault(); this.props.onNavigate('support');}}>
+          <a href="#" className="flat-button" onClick={e => {e.preventDefault();}}>
             <i className="material-icons">contact_support</i>&nbsp;<FormattedMessage id="sidepanel_title_acc_support"
               defaultMessage="Support" description="Sidepanel title for AccSupportView." />
           </a>

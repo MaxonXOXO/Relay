@@ -197,7 +197,7 @@ self.addEventListener('fetch', event => {
     // Cache handling strategy: for navigation requests (index.html, index-dev.html)
     // use network-first strategy, for all other requests use cache-first strategy.
 
-    if (event.request.mode == 'navigate') {
+    if (event.request.mode == 'navigate' || (reqUrl.origin == self.location.origin && /\.(js|css|html)$/.test(reqUrl.pathname))) {
       // Network-First Strategy
       return fetchAndCache(event.request, cache, reqUrl)
         .catch(() => getFromCache(event.request, cache, reqUrl))

@@ -29,6 +29,14 @@ class BaseChatMessage extends React.PureComponent {
     this.handleFormButtonClick = this.handleFormButtonClick.bind(this);
     this.handleQuoteClick = this.handleQuoteClick.bind(this);
     this.handleContextClick = this.handleContextClick.bind(this);
+    this.handleTouchStart = this.handleTouchStart.bind(this);
+    this.handleTouchMove = this.handleTouchMove.bind(this);
+    this.handleTouchEnd = this.handleTouchEnd.bind(this);
+    this.handleTouchCancel = this.handleTouchCancel.bind(this);
+    this.openContextMenu = this.openContextMenu.bind(this);
+    this.lastMenuOpenedAt = 0;
+    this.touch = null;
+    this.longPressTimer = null;
     this.handleCancelUpload = this.handleCancelUpload.bind(this);
     this.handleDraftyClick = this.handleDraftyClick.bind(this);
 
@@ -124,9 +132,63 @@ class BaseChatMessage extends React.PureComponent {
     this.props.onFormResponse(e.target.dataset.act, text, data);
   }
 
+  // Right-click (desktop).
   handleContextClick(e) {
     e.preventDefault();
     e.stopPropagation();
+    if (Date.now() - this.lastMenuOpenedAt < 600) {
+      // Menu was just opened by long-press; ignore the synthesized contextmenu event.
+      return;
+    }
+    this.openContextMenu(e.pageX, e.pageY);
+  }
+
+  // Long-press / swipe-right (touch screens).
+  handleTouchStart(e) {
+    if (e.touches.length != 1) {
+      return;
+    }
+    const t = e.touches[0];
+    this.touch = {x: t.pageX, y: t.pageY, dx: 0, dy: 0};
+    clearTimeout(this.longPressTimer);
+    this.longPressTimer = setTimeout(_ => {
+      if (this.touch) {
+        const {x, y} = this.touch;
+        this.touch = null;
+        this.openContextMenu(x, y);
+      }
+    }, 500);
+  }
+
+  handleTouchMove(e) {
+    if (!this.touch) {
+      return;
+    }
+    const t = e.touches[0];
+    this.touch.dx = t.pageX - this.touch.x;
+    this.touch.dy = t.pageY - this.touch.y;
+    if (Math.abs(this.touch.dx) > 10 || Math.abs(this.touch.dy) > 10) {
+      clearTimeout(this.longPressTimer);
+    }
+  }
+
+  handleTouchEnd() {
+    clearTimeout(this.longPressTimer);
+    const touch = this.touch;
+    this.touch = null;
+    if (touch && touch.dx > 70 && Math.abs(touch.dy) < 30) {
+      // Swipe right.
+      this.openContextMenu(touch.x, touch.y);
+    }
+  }
+
+  handleTouchCancel() {
+    clearTimeout(this.longPressTimer);
+    this.touch = null;
+  }
+
+  openContextMenu(x, y) {
+    this.lastMenuOpenedAt = Date.now();
     const menuItems = [];
     if (this.props.received == Tinode.MESSAGE_STATUS_FAILED) {
       menuItems.push('menu_item_send_retry');
@@ -163,8 +225,8 @@ class BaseChatMessage extends React.PureComponent {
       content: this.props.content,
       userFrom: this.props.userFrom,
       userName: this.props.userName,
-      y: e.pageY,
-      x: e.pageX,
+      y: y,
+      x: x,
       pickReply: this.props.pickReply,
       editMessage: this.props.editMessage,
       timestamp: this.props.timestamp,
@@ -233,7 +295,12 @@ class BaseChatMessage extends React.PureComponent {
     }
 
     return (
-      <li ref={this.props.innerRef} className={sideClass}>
+      <li ref={this.props.innerRef} className={sideClass}
+        onContextMenu={this.props.showContextMenu ? this.handleContextClick : undefined}
+        onTouchStart={this.props.showContextMenu ? this.handleTouchStart : undefined}
+        onTouchMove={this.props.showContextMenu ? this.handleTouchMove : undefined}
+        onTouchEnd={this.props.showContextMenu ? this.handleTouchEnd : undefined}
+        onTouchCancel={this.props.showContextMenu ? this.handleTouchCancel : undefined}>
         {this.props.isGroup && this.props.response ?
           <div className="avatar-box">
             {fullDisplay ?
@@ -259,13 +326,6 @@ class BaseChatMessage extends React.PureComponent {
                   received={this.props.received} />
                 : null}
             </div>
-            {this.props.showContextMenu ?
-              <span className="menuTrigger">
-                <a href="#" onClick={this.handleContextClick}>
-                  <i className="material-icons">expand_more</i>
-                </a>
-              </span> : null
-            }
           </div>
           {fullDisplay ?
             <div className="author">

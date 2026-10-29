@@ -40,10 +40,10 @@ export default class WallpapersView extends React.PureComponent {
         return;
       }
 
-      // Restore default.
-      type = WALLPAPER_DEFAULTS.type;
-      index = WALLPAPER_DEFAULTS.index;
-      blur = 0;
+      // Restore Relay default SVG wallpaper.
+      this.setState({tab: 'patt', wallpaper: 'chat-wallpaper-light.svg', selectedType: 'default', blur: 0});
+      this.props.onWallpaperSelected('../img/chat-wallpaper-light.svg', 0, 0);
+      return;
     } else {
       e.preventDefault();
       type = this.state.tab;
@@ -67,8 +67,7 @@ export default class WallpapersView extends React.PureComponent {
   }
 
   hasChanged() {
-    return this.state.selectedType != WALLPAPER_DEFAULTS.type ||
-      this.state.wallpaper != imageIndex[WALLPAPER_DEFAULTS.type][WALLPAPER_DEFAULTS.index].name ||
+    return (this.state.wallpaper && !this.state.wallpaper.startsWith('chat-wallpaper-') && this.state.wallpaper !== 'a00.png') ||
       this.state.blur != 0;
   }
 

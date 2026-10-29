@@ -2381,8 +2381,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _version_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./version.js */ "./src/version.js");
 
-const BASE_APP_NAME = 'TinodeWeb';
-const APP_NAME = BASE_APP_NAME + '/' + (_version_js__WEBPACK_IMPORTED_MODULE_0__.PACKAGE_VERSION || '0.25');
+const BASE_APP_NAME = 'Relay';
+const APP_NAME = BASE_APP_NAME + '/' + (_version_js__WEBPACK_IMPORTED_MODULE_0__.PACKAGE_VERSION || '1.0');
 const API_KEY = 'AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K';
 const KNOWN_HOSTS = {
   hosted: 'web.tinode.co',
@@ -2423,9 +2423,9 @@ const FORWARDED_PREVIEW_LENGTH = 84;
 const EDIT_PREVIEW_LENGTH = 48;
 const MIN_DURATION = 2_000;
 const MAX_DURATION = 600_000;
-const LINK_CONTACT_US = 'mailto:support@tinode.co';
-const LINK_PRIVACY_POLICY = 'https://tinode.co/privacy.html';
-const LINK_TERMS_OF_SERVICE = 'https://tinode.co/terms.html';
+const LINK_CONTACT_US = '#';
+const LINK_PRIVACY_POLICY = '#';
+const LINK_TERMS_OF_SERVICE = '#';
 const IMMEDIATE_P2P_SUBSCRIPTION = false;
 const CLICKABLE_URL_SCHEMES = ['http', 'https', 'ftp', 'ftps'];
 const QRCODE_SIZE = 128;
@@ -3669,7 +3669,7 @@ function updateFavicon(count) {
     head.removeChild(oldIcon);
   }
   head.appendChild(newIcon);
-  document.title = (count > 0 ? '(' + count + ') ' : '') + 'Tinode';
+  document.title = (count > 0 ? '(' + count + ') ' : '') + 'Relay';
 }
 function theCard(fn, imageUrl, imageMimeType, note) {
   let card = null;
@@ -3839,11 +3839,9 @@ function cancelablePromise(promise) {
 }
 ;
 function defaultWallpaper() {
-  const wallpaperIndex = __webpack_require__(/*! ../../img/bkg/index.json */ "./img/bkg/index.json");
-  const wp = wallpaperIndex[_config_js__WEBPACK_IMPORTED_MODULE_1__.WALLPAPER_DEFAULTS.type][_config_js__WEBPACK_IMPORTED_MODULE_1__.WALLPAPER_DEFAULTS.index];
   return {
-    name: `../${_config_js__WEBPACK_IMPORTED_MODULE_1__.WALLPAPER_DEFAULTS.path}${wp.name}`,
-    size: wp.size
+    name: '../img/chat-wallpaper-light.svg',
+    size: 0
   };
 }
 function wallpaperNameFromUrl(wallpaperUrl) {
@@ -3895,23 +3893,30 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+const TEXT_SIZE_STEPS = [80, 90, 100, 110, 120];
 class AccGeneralView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureComponent {
   constructor(props) {
     super(props);
     this.state = {
       colorSchema: props.colorSchema || 'auto',
-      textSize: props.textSize * 10 || '100',
+      textSize: Math.round((props.textSize || 10) * 10),
       sendOnEnter: props.sendOnEnter || 'plain'
     };
     this.isMac = (navigator.userAgentData && navigator.userAgentData.platform || navigator.platform).toLowerCase().startsWith('mac');
     this.handleColorSchemaSelected = this.handleColorSchemaSelected.bind(this);
     this.handleTextSizeChanged = this.handleTextSizeChanged.bind(this);
+    this.handleTextSizeStepClick = this.handleTextSizeStepClick.bind(this);
     this.handleSendOnEnterSelected = this.handleSendOnEnterSelected.bind(this);
   }
   componentDidUpdate(prevProps) {
     if (prevProps.colorSchema !== this.props.colorSchema && this.props.colorSchema) {
       this.setState({
         colorSchema: this.props.colorSchema
+      });
+    }
+    if (prevProps.textSize !== this.props.textSize && this.props.textSize) {
+      this.setState({
+        textSize: Math.round(this.props.textSize * 10)
       });
     }
   }
@@ -3922,10 +3927,17 @@ class AccGeneralView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
     this.props.onChangeColorSchema(e.currentTarget.value);
   }
   handleTextSizeChanged(e) {
+    const pct = parseInt(e.currentTarget.value, 10) || 100;
     this.setState({
-      textSize: e.currentTarget.value
+      textSize: pct
     });
-    this.props.onTextSizeChanged(e.currentTarget.value / 10 | 0);
+    this.props.onTextSizeChanged(pct / 10);
+  }
+  handleTextSizeStepClick(pct) {
+    this.setState({
+      textSize: pct
+    });
+    this.props.onTextSizeChanged(pct / 10);
   }
   handleSendOnEnterSelected(e) {
     this.setState({
@@ -3934,6 +3946,7 @@ class AccGeneralView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
     this.props.onSendOnEnterChanged(e.currentTarget.value);
   }
   render() {
+    const currentPct = Number(this.state.textSize) || 100;
     return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
       id: "settings-form",
       className: "scrollable-panel",
@@ -4039,47 +4052,51 @@ class AccGeneralView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
         className: "panel-form-column",
         children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
           className: "panel-form-row",
-          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("label", {
+          style: {
+            justifyContent: 'space-between'
+          },
+          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("label", {
             className: "small",
+            htmlFor: "text_size",
             children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
               id: "label_text_size",
               defaultMessage: "Text size:",
               description: "Label adjusting text size"
             }, void 0, false)
-          }, void 0, false)
-        }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
+          }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("span", {
+            className: "text-size-badge",
+            children: [currentPct, "%"]
+          }, void 0, true)]
+        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
           className: "panel-form-row",
           children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("input", {
             type: "range",
             id: "text_size",
             name: "text_size",
+            className: "relay-range-slider",
             min: "80",
             max: "120",
             step: "10",
-            list: "text_size_options",
-            value: this.state.textSize,
+            value: currentPct,
+            onInput: this.handleTextSizeChanged,
             onChange: this.handleTextSizeChanged
           }, void 0, false)
         }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
-          className: "panel-form-row",
-          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("datalist", {
-            id: "text_size_options",
-            children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("option", {
-              value: "80",
-              label: "80%"
-            }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("option", {
-              value: "90",
-              label: "90%"
-            }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("option", {
-              value: "100",
-              label: "100%"
-            }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("option", {
-              value: "110",
-              label: "110%"
-            }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("option", {
-              value: "120",
-              label: "120%"
-            }, void 0, false)]
+          className: "panel-form-row text-size-steps",
+          children: TEXT_SIZE_STEPS.map(pct => (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("button", {
+            type: "button",
+            className: 'text-size-step' + (currentPct === pct ? ' active' : ''),
+            onClick: () => this.handleTextSizeStepClick(pct),
+            children: [pct, "%"]
+          }, pct, true))
+        }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
+          className: "text-size-preview-box",
+          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
+            className: "text-size-preview-bubble",
+            style: {
+              fontSize: `${currentPct / 10}pt`
+            },
+            children: ["Preview message text at ", currentPct, "%"]
           }, void 0, true)
         }, void 0, false)]
       }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
@@ -4091,7 +4108,7 @@ class AccGeneralView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
           children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
             id: "label_keyboard",
             defaultMessage: "Keyboard:",
-            description: "Label for send on enter settings"
+            description: "Label for selecting Ctrl+Enter vs Enter behavior"
           }, void 0, false)
         }, void 0, false)
       }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
@@ -4101,59 +4118,64 @@ class AccGeneralView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureC
           children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("li", {
             children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("input", {
               type: "radio",
-              id: "plain",
-              name: "send-select",
+              id: "send_on_enter",
+              name: "send-on-enter-select",
               value: "plain",
               checked: this.state.sendOnEnter == 'plain',
               onChange: this.handleSendOnEnterSelected
             }, void 0, false), "\xA0", (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("label", {
-              htmlFor: "send_plain",
-              children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-                id: "send_plain",
-                defaultMessage: "Send on Enter",
-                description: "Config option to send message on hitting Enter"
-              }, void 0, false), "\xA0"]
-            }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
-              className: "panel-form-row",
-              children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("span", {
-                className: "small gray",
-                children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-                  id: "send_plain_explained",
-                  defaultMessage: "Press Shift + Enter for new line",
-                  description: "Explanation how to enter newline when [Send on Enter] is enabled"
-                }, void 0, false)
+              htmlFor: "send_on_enter",
+              children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+                id: "send_on_enter",
+                defaultMessage: "Enter to send, Shift+Enter for new line",
+                values: {
+                  enter: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("kbd", {
+                    children: "Enter"
+                  }, void 0, false),
+                  shift_enter: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("kbd", {
+                    children: "Shift+Enter"
+                  }, void 0, false)
+                },
+                description: "Label for selecting Enter behavior"
               }, void 0, false)
             }, void 0, false)]
-          }, "plain", true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("li", {
+          }, "send_on_enter", true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("li", {
             children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("input", {
               type: "radio",
-              id: "command",
-              name: "send-select",
-              value: "command",
-              checked: this.state.sendOnEnter == 'command',
+              id: "send_on_ctrl_enter",
+              name: "send-on-enter-select",
+              value: "ctrl",
+              checked: this.state.sendOnEnter == 'ctrl',
               onChange: this.handleSendOnEnterSelected
             }, void 0, false), "\xA0", (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("label", {
-              htmlFor: "send_command",
-              children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-                id: "send_command",
-                defaultMessage: "Send on {key}",
+              htmlFor: "send_on_ctrl_enter",
+              children: this.isMac ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+                id: "send_on_cmd_enter",
+                defaultMessage: "Cmd+Enter to send, Enter for new line",
                 values: {
-                  key: this.isMac ? '⌘ + Enter' : 'Ctrl + Enter'
+                  cmd_enter: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("kbd", {
+                    children: "⌘+Enter"
+                  }, void 0, false),
+                  enter: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("kbd", {
+                    children: "Enter"
+                  }, void 0, false)
                 },
-                description: "Config option to send message on hitting CTRL(or Cmd)-Enter"
-              }, void 0, false), "\xA0"]
-            }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("div", {
-              className: "panel-form-row",
-              children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("span", {
-                className: "small gray",
-                children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-                  id: "send_command_explained",
-                  defaultMessage: "Press Enter for new line",
-                  description: "Explanation how to enter newline when [Send on CTRL-Enter] is enabled"
-                }, void 0, false)
+                description: "Label for selecting Cmd+Enter behavior on Mac"
+              }, void 0, false) : (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+                id: "send_on_ctrl_enter",
+                defaultMessage: "Ctrl+Enter to send, Enter for new line",
+                values: {
+                  ctrl_enter: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("kbd", {
+                    children: "Ctrl+Enter"
+                  }, void 0, false),
+                  enter: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxDEV)("kbd", {
+                    children: "Enter"
+                  }, void 0, false)
+                },
+                description: "Label for selecting Ctrl+Enter behavior"
               }, void 0, false)
             }, void 0, false)]
-          }, "command", true)]
+          }, "send_on_ctrl_enter", true)]
         }, void 0, true)
       }, void 0, false)]
     }, void 0, true);
@@ -4250,106 +4272,40 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
 /* harmony import */ var react_intl__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-intl */ "./src/lib/react-intl-compat.js");
-/* harmony import */ var tinode_sdk__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! tinode-sdk */ "tinode-sdk");
-/* harmony import */ var tinode_sdk__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(tinode_sdk__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _config_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../config.js */ "./src/config.js");
-/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-dev-runtime */ "./node_modules/react/jsx-dev-runtime.js");
-
+/* harmony import */ var _config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../config.js */ "./src/config.js");
+/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react/jsx-dev-runtime */ "./node_modules/react/jsx-dev-runtime.js");
 
 
 
 
 class AccSupportView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureComponent {
   render() {
-    return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("div", {
+    return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
       className: "scrollable-panel",
-      children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("div", {
+      children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
         className: "panel-form-column",
-        children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("a", {
-          href: _config_js__WEBPACK_IMPORTED_MODULE_3__.LINK_CONTACT_US,
-          className: "flat-button",
-          target: "_blank",
-          rel: "noopener noreferrer",
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("i", {
-            className: "material-icons",
-            children: "email"
-          }, void 0, false), " \xA0", (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-            id: "link_contact_us",
-            defaultMessage: "Contact Us",
-            description: "Ancor text for contacting us by email"
-          }, void 0, false)]
-        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("a", {
-          href: _config_js__WEBPACK_IMPORTED_MODULE_3__.LINK_TERMS_OF_SERVICE,
-          className: "flat-button",
-          target: "_blank",
-          rel: "noopener noreferrer",
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("i", {
-            className: "material-icons",
-            children: "description"
-          }, void 0, false), " \xA0", (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-            id: "link_terms_of_service",
-            defaultMessage: "Terms of Service",
-            description: "Ancor text for terms of service link"
-          }, void 0, false)]
-        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("a", {
-          href: _config_js__WEBPACK_IMPORTED_MODULE_3__.LINK_PRIVACY_POLICY,
-          className: "flat-button",
-          target: "_blank",
-          rel: "noopener noreferrer",
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("i", {
-            className: "material-icons",
-            children: "policy"
-          }, void 0, false), " \xA0", (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-            id: "link_privacy_policy",
-            defaultMessage: "Privacy Policy",
-            description: "Ancor text for privacy policy link"
-          }, void 0, false)]
-        }, void 0, true)]
-      }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("div", {
-        className: "hr"
-      }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("div", {
-        className: "panel-form-column",
-        children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("div", {
+        children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
           className: "panel-form-row",
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("label", {
+          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("label", {
             className: "small",
-            children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+            children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
               id: "label_client",
               defaultMessage: "Client:",
               description: "Label for a client version"
             }, void 0, false)
-          }, void 0, false), _config_js__WEBPACK_IMPORTED_MODULE_3__.APP_NAME]
-        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("div", {
+          }, void 0, false), _config_js__WEBPACK_IMPORTED_MODULE_2__.APP_NAME]
+        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
           className: "panel-form-row",
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("label", {
+          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("label", {
             className: "small",
-            children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-              id: "label_sdk",
-              defaultMessage: "SDK:"
-            }, void 0, false)
-          }, void 0, false), tinode_sdk__WEBPACK_IMPORTED_MODULE_2__.Tinode.getLibrary()]
-        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("div", {
-          className: "panel-form-row",
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("label", {
-            className: "small",
-            children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
-              id: "label_server",
-              defaultMessage: "Server:",
-              description: "Label for a server version"
-            }, void 0, false)
-          }, void 0, false), this.props.serverVersion]
-        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("div", {
-          className: "panel-form-row",
-          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)("label", {
-            className: "small",
-            children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+            children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
               id: "label_server_address",
               defaultMessage: "Server address:"
             }, void 0, false)
           }, void 0, false), this.props.serverAddress]
         }, void 0, true)]
-      }, void 0, true)]
-    }, void 0, true);
+      }, void 0, true)
+    }, void 0, false);
   }
 }
 ;
@@ -4844,6 +4800,149 @@ class NewTopicView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Compone
 
 /***/ },
 
+/***/ "./src/views/onboarding-view.jsx"
+/*!***************************************!*\
+  !*** ./src/views/onboarding-view.jsx ***!
+  \***************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ OnboardingView)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
+/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react/jsx-dev-runtime */ "./node_modules/react/jsx-dev-runtime.js");
+
+
+const SLIDES = [{
+  icon: 'forum',
+  badge: 'Real-Time Messaging',
+  title: 'Welcome to Relay',
+  description: 'Fast, reliable, and distraction-free messaging. Share rich text, files, voice notes, and group conversations in real time.'
+}, {
+  icon: 'videocam',
+  badge: 'WebRTC Calling',
+  title: 'HD Voice & Video Calls',
+  description: 'Start direct peer-to-peer audio and video calls with a single tap right from the chat header — with zero relay lag.'
+}, {
+  icon: 'dark_mode',
+  badge: 'Modern Interface',
+  title: 'Crafted for Comfort',
+  description: 'Seamlessly switch between Light, Dark, and System themes with custom vector chat wallpapers and adjustable typography.'
+}];
+class OnboardingView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureComponent {
+  constructor(props) {
+    super(props);
+    this.state = {
+      step: 0
+    };
+    this.handleNext = this.handleNext.bind(this);
+    this.handleGetStarted = this.handleGetStarted.bind(this);
+    this.handleCreateAccount = this.handleCreateAccount.bind(this);
+  }
+  handleNext(e) {
+    e.preventDefault();
+    if (this.state.step < SLIDES.length - 1) {
+      this.setState({
+        step: this.state.step + 1
+      });
+    } else {
+      this.handleGetStarted(e);
+    }
+  }
+  handleGetStarted(e) {
+    if (e) e.preventDefault();
+    if (this.props.onGetStarted) {
+      this.props.onGetStarted();
+    }
+  }
+  handleCreateAccount(e) {
+    if (e) e.preventDefault();
+    if (this.props.onCreateAccount) {
+      this.props.onCreateAccount();
+    }
+  }
+  render() {
+    const slide = SLIDES[this.state.step];
+    return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("div", {
+      id: "onboarding-view",
+      className: "onboarding-panel",
+      children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("div", {
+        className: "onboarding-hero",
+        children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("div", {
+          className: "onboarding-brand",
+          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("img", {
+            src: "img/logo.svg",
+            alt: "Relay",
+            className: "onboarding-logo"
+          }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("span", {
+            className: "onboarding-brand-name",
+            children: "Relay"
+          }, void 0, false)]
+        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("div", {
+          className: "onboarding-card",
+          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("div", {
+            className: "onboarding-icon-badge",
+            children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("i", {
+              className: "material-icons",
+              children: slide.icon
+            }, void 0, false)
+          }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("span", {
+            className: "onboarding-pill",
+            children: slide.badge
+          }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("h2", {
+            className: "onboarding-title",
+            children: slide.title
+          }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("p", {
+            className: "onboarding-desc",
+            children: slide.description
+          }, void 0, false)]
+        }, this.state.step, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("div", {
+          className: "onboarding-dots",
+          role: "tablist",
+          "aria-label": "Onboarding steps",
+          children: SLIDES.map((s, idx) => (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("button", {
+            type: "button",
+            className: 'onboarding-dot' + (idx === this.state.step ? ' active' : ''),
+            "aria-label": `Slide ${idx + 1}: ${s.title}`,
+            onClick: () => this.setState({
+              step: idx
+            })
+          }, idx, false))
+        }, void 0, false)]
+      }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("div", {
+        className: "onboarding-actions",
+        children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("button", {
+          type: "button",
+          className: "primary onboarding-btn-main",
+          onClick: this.handleGetStarted,
+          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("span", {
+            children: "Get Started"
+          }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("i", {
+            className: "material-icons",
+            children: "arrow_forward"
+          }, void 0, false)]
+        }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("button", {
+          type: "button",
+          className: "outline onboarding-btn-secondary",
+          onClick: this.handleCreateAccount,
+          children: "Create New Account"
+        }, void 0, false), this.state.step < SLIDES.length - 1 ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("a", {
+          href: "#",
+          className: "onboarding-next-link",
+          onClick: this.handleNext,
+          children: ["Next feature (", this.state.step + 1, "/", SLIDES.length, ") →"]
+        }, void 0, true) : (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_1__.jsxDEV)("span", {
+          className: "onboarding-footnote",
+          children: "Instant sign-up enabled • End-to-end synchronized"
+        }, void 0, false)]
+      }, void 0, true)]
+    }, void 0, true);
+  }
+}
+
+/***/ },
+
 /***/ "./src/views/settings-view.jsx"
 /*!*************************************!*\
   !*** ./src/views/settings-view.jsx ***!
@@ -5013,10 +5112,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _acc_notifications_view_jsx__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./acc-notifications-view.jsx */ "./src/views/acc-notifications-view.jsx");
 /* harmony import */ var _acc_support_view_jsx__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./acc-support-view.jsx */ "./src/views/acc-support-view.jsx");
 /* harmony import */ var _login_view_jsx__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./login-view.jsx */ "./src/views/login-view.jsx");
-/* harmony import */ var _new_topic_view_jsx__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./new-topic-view.jsx */ "./src/views/new-topic-view.jsx");
-/* harmony import */ var _settings_view_jsx__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./settings-view.jsx */ "./src/views/settings-view.jsx");
-/* harmony import */ var _validation_view_jsx__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./validation-view.jsx */ "./src/views/validation-view.jsx");
-/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! react/jsx-dev-runtime */ "./node_modules/react/jsx-dev-runtime.js");
+/* harmony import */ var _onboarding_view_jsx__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./onboarding-view.jsx */ "./src/views/onboarding-view.jsx");
+/* harmony import */ var _new_topic_view_jsx__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./new-topic-view.jsx */ "./src/views/new-topic-view.jsx");
+/* harmony import */ var _settings_view_jsx__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./settings-view.jsx */ "./src/views/settings-view.jsx");
+/* harmony import */ var _validation_view_jsx__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./validation-view.jsx */ "./src/views/validation-view.jsx");
+/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! react/jsx-dev-runtime */ "./node_modules/react/jsx-dev-runtime.js");
 
 
 
@@ -5032,12 +5132,18 @@ const AccSecurityView = react__WEBPACK_IMPORTED_MODULE_0__["default"].lazy(_ => 
 
 
 
+
 const PasswordResetView = react__WEBPACK_IMPORTED_MODULE_0__["default"].lazy(_ => Promise.all(/*! import() */[__webpack_require__.e("vendors-node_modules_libphonenumber-js_mobile_exports_parsePhoneNumberWithError_js"), __webpack_require__.e("vendors-node_modules_libphonenumber-js_examples_mobile_json_js-node_modules_libphonenumber-js-883e54"), __webpack_require__.e("src_widgets_phone-edit_jsx"), __webpack_require__.e("src_views_password-reset-view_jsx")]).then(() => (__webpack_require__(/*! ./password-reset-view.jsx */ "./src/views/password-reset-view.jsx"))));
 
 
 
 const WallpapersView = react__WEBPACK_IMPORTED_MODULE_0__["default"].lazy(_ => __webpack_require__.e(/*! import() */ "src_views_wallpapers_jsx").then(() => (__webpack_require__(/*! ./wallpapers.jsx */ "./src/views/wallpapers.jsx"))));
 const messages = (0,react_intl__WEBPACK_IMPORTED_MODULE_1__.defineMessages)({
+  onboarding: {
+    id: 'sidepanel_title_onboarding',
+    description: 'Sidepanel title for OnboardingView.',
+    defaultMessage: 'Relay'
+  },
   login: {
     id: 'sidepanel_title_login',
     description: 'Sidepanel title for LoginView.',
@@ -5131,24 +5237,24 @@ class SidepanelView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCo
     const {
       formatMessage
     } = this.props.intl;
-    const view = this.props.state || (this.props.myUserId ? 'contacts' : 'login');
+    const view = this.props.state || (this.props.myUserId ? 'contacts' : 'onboarding');
     let title, avatar, badges;
     if (view == 'contacts') {
       title = this.props.title;
       avatar = this.props.avatar ? this.props.avatar : true;
       badges = this.props.trustedBadges;
     } else {
-      title = formatMessage(messages[view]);
+      title = messages[view] ? formatMessage(messages[view]) : 'Relay';
       avatar = false;
       badges = null;
     }
     let onCancel;
-    if (['login', 'contacts'].indexOf(view) == -1) {
+    if (['onboarding', 'contacts'].indexOf(view) == -1) {
       onCancel = this.props.onCancel;
     }
-    return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)("div", {
+    return (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)("div", {
       id: "sidepanel",
-      children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_widgets_side_navbar_jsx__WEBPACK_IMPORTED_MODULE_4__["default"], {
+      children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_widgets_side_navbar_jsx__WEBPACK_IMPORTED_MODULE_4__["default"], {
         state: view,
         title: title,
         avatar: avatar,
@@ -5162,30 +5268,33 @@ class SidepanelView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCo
         onSettings: this.props.onSettings,
         onNewTopic: this.handleNewTopic,
         onCancel: onCancel
-      }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_widgets_error_panel_jsx__WEBPACK_IMPORTED_MODULE_2__["default"], {
+      }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_widgets_error_panel_jsx__WEBPACK_IMPORTED_MODULE_2__["default"], {
         level: this.props.errorLevel,
         text: this.props.errorText,
         action: this.props.errorAction,
         actionText: this.props.errorActionText,
         onClearError: this.props.onError
-      }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_widgets_load_spinner_jsx__WEBPACK_IMPORTED_MODULE_3__["default"], {
+      }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_widgets_load_spinner_jsx__WEBPACK_IMPORTED_MODULE_3__["default"], {
         show: this.props.loadSpinnerVisible
-      }, void 0, false), view === 'login' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_login_view_jsx__WEBPACK_IMPORTED_MODULE_10__["default"], {
+      }, void 0, false), view === 'onboarding' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_onboarding_view_jsx__WEBPACK_IMPORTED_MODULE_11__["default"], {
+        onGetStarted: () => this.props.onNavigate('login'),
+        onCreateAccount: this.props.onSignUp
+      }, void 0, false) : view === 'login' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_login_view_jsx__WEBPACK_IMPORTED_MODULE_10__["default"], {
         login: this.props.login,
         disabled: this.props.loginDisabled,
         persist: this.props.persist,
         onLogin: this.props.onLoginRequest,
         onPersistenceChange: this.props.onPersistenceChange
-      }, void 0, false) : view === 'register' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(react__WEBPACK_IMPORTED_MODULE_0__.Suspense, {
-        fallback: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)("div", {
+      }, void 0, false) : view === 'register' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(react__WEBPACK_IMPORTED_MODULE_0__.Suspense, {
+        fallback: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)("div", {
           className: "panel-form-row",
-          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
             id: "loading_note",
             defaultMessage: "Loading...",
             description: "Message shown when component is loading"
           }, void 0, false)
         }, void 0, false),
-        children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(CreateAccountView, {
+        children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(CreateAccountView, {
           tinode: this.props.tinode,
           reqCredMethod: this.props.reqCredMethod,
           onShowCountrySelector: this.props.onShowCountrySelector,
@@ -5193,22 +5302,22 @@ class SidepanelView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCo
           onCancel: this.props.onCancel,
           onError: this.props.onError
         }, void 0, false)
-      }, void 0, false) : view === 'settings' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_settings_view_jsx__WEBPACK_IMPORTED_MODULE_12__["default"], {
+      }, void 0, false) : view === 'settings' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_settings_view_jsx__WEBPACK_IMPORTED_MODULE_13__["default"], {
         transport: this.props.transport,
         serverAddress: this.props.serverAddress,
         secureConnection: this.props.secureConnection,
         onCancel: this.props.onCancel,
         onUpdate: this.props.onGlobalSettings
-      }, void 0, false) : view === 'edit' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(react__WEBPACK_IMPORTED_MODULE_0__.Suspense, {
-        fallback: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)("div", {
+      }, void 0, false) : view === 'edit' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(react__WEBPACK_IMPORTED_MODULE_0__.Suspense, {
+        fallback: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)("div", {
           className: "panel-form-row",
-          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
             id: "loading_note",
             defaultMessage: "Loading...",
             description: "Message shown when component is loading"
           }, void 0, false)
         }, void 0, false),
-        children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(AccountSettingsView, {
+        children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(AccountSettingsView, {
           tinode: this.props.tinode,
           myUserId: this.props.myUserId,
           trustedBadges: this.props.trustedBadges,
@@ -5220,7 +5329,7 @@ class SidepanelView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCo
           onCredConfirm: this.props.onCredConfirm,
           onError: this.props.onError
         }, void 0, false)
-      }, void 0, false) : view === 'general' || view === 'crop' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_topic_common_view_jsx__WEBPACK_IMPORTED_MODULE_5__["default"], {
+      }, void 0, false) : view === 'general' || view === 'crop' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_topic_common_view_jsx__WEBPACK_IMPORTED_MODULE_5__["default"], {
         topic: "me",
         tinode: this.props.tinode,
         myUserId: this.props.myUserId,
@@ -5228,7 +5337,7 @@ class SidepanelView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCo
         onUpdateTopicDesc: this.props.onUpdateAccountDesc,
         onUpdateTagsRequest: this.props.onUpdateAccountTags,
         onError: this.props.onError
-      }, void 0, false) : view === 'acc_general' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_acc_general_view_jsx__WEBPACK_IMPORTED_MODULE_7__["default"], {
+      }, void 0, false) : view === 'acc_general' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_acc_general_view_jsx__WEBPACK_IMPORTED_MODULE_7__["default"], {
         colorSchema: this.props.colorSchema,
         onSelectWallpapers: this.props.onSelectWallpapers,
         textSize: this.props.textSize,
@@ -5236,22 +5345,22 @@ class SidepanelView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCo
         onChangeColorSchema: this.props.onChangeColorSchema,
         onTextSizeChanged: this.props.onTextSizeChanged,
         onSendOnEnterChanged: this.props.onSendOnEnterChanged
-      }, void 0, false) : view === 'notif' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_acc_notifications_view_jsx__WEBPACK_IMPORTED_MODULE_8__["default"], {
+      }, void 0, false) : view === 'notif' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_acc_notifications_view_jsx__WEBPACK_IMPORTED_MODULE_8__["default"], {
         messageSounds: this.props.messageSounds,
         desktopAlerts: this.props.desktopAlerts,
         desktopAlertsEnabled: this.props.desktopAlertsEnabled,
         onTogglePushNotifications: this.props.onTogglePushNotifications,
         onToggleMessageSounds: this.props.onToggleMessageSounds
-      }, void 0, false) : view === 'security' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(react__WEBPACK_IMPORTED_MODULE_0__.Suspense, {
-        fallback: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)("div", {
+      }, void 0, false) : view === 'security' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(react__WEBPACK_IMPORTED_MODULE_0__.Suspense, {
+        fallback: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)("div", {
           className: "panel-form-row",
-          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
             id: "loading_note",
             defaultMessage: "Loading...",
             description: "Message shown when component is loading"
           }, void 0, false)
         }, void 0, false),
-        children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(AccSecurityView, {
+        children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(AccSecurityView, {
           tinode: this.props.tinode,
           incognitoMode: this.props.incognitoMode,
           onUpdateAccountDesc: this.props.onUpdateAccountDesc,
@@ -5262,26 +5371,26 @@ class SidepanelView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCo
           onShowBlocked: this.props.onShowBlocked,
           onToggleIncognitoMode: this.props.onToggleIncognitoMode
         }, void 0, false)
-      }, void 0, false) : view === 'support' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_acc_support_view_jsx__WEBPACK_IMPORTED_MODULE_9__["default"], {
+      }, void 0, false) : view === 'support' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_acc_support_view_jsx__WEBPACK_IMPORTED_MODULE_9__["default"], {
         serverAddress: this.props.serverAddress,
         serverVersion: this.props.serverVersion
-      }, void 0, false) : view === 'wallpapers' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(react__WEBPACK_IMPORTED_MODULE_0__.Suspense, {
-        fallback: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)("div", {
+      }, void 0, false) : view === 'wallpapers' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(react__WEBPACK_IMPORTED_MODULE_0__.Suspense, {
+        fallback: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)("div", {
           className: "panel-form-row",
-          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
             id: "loading_note",
             defaultMessage: "Loading...",
             description: "Message shown when component is loading"
           }, void 0, false)
         }, void 0, false),
-        children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(WallpapersView, {
+        children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(WallpapersView, {
           wallpaper: this.props.wallpaper,
           wallpaperSize: this.props.wallpaperSize,
           wallpaperBlur: this.props.wallpaperBlur,
           colorSchema: this.props.colorSchema !== 'auto' ? this.props.colorSchema : this.props.systemColorSchema,
           onWallpaperSelected: this.props.onWallpaperSelected
         }, void 0, false)
-      }, void 0, false) : view === 'contacts' || view == 'archive' || view == 'blocked' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_contacts_view_jsx__WEBPACK_IMPORTED_MODULE_6__["default"], {
+      }, void 0, false) : view === 'contacts' || view == 'archive' || view == 'blocked' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_contacts_view_jsx__WEBPACK_IMPORTED_MODULE_6__["default"], {
         tinode: this.props.tinode,
         myUserId: this.props.myUserId,
         connected: this.props.connected,
@@ -5292,29 +5401,29 @@ class SidepanelView extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCo
         showContextMenu: this.props.showContextMenu,
         onTopicSelected: this.props.onTopicSelected,
         onShowArchive: this.props.onShowArchive
-      }, void 0, false) : view === 'newtpk' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_new_topic_view_jsx__WEBPACK_IMPORTED_MODULE_11__["default"], {
+      }, void 0, false) : view === 'newtpk' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_new_topic_view_jsx__WEBPACK_IMPORTED_MODULE_12__["default"], {
         tinode: this.props.tinode,
         searchResults: this.props.searchResults,
         onInitFind: this.props.onInitFind,
         onSearchContacts: this.props.onSearchContacts,
         onCreateTopic: this.props.onCreateTopic,
         onError: this.props.onError
-      }, void 0, false) : view === 'cred' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(_validation_view_jsx__WEBPACK_IMPORTED_MODULE_13__["default"], {
+      }, void 0, false) : view === 'cred' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(_validation_view_jsx__WEBPACK_IMPORTED_MODULE_14__["default"], {
         credCode: this.props.credCode,
         credMethod: this.props.credMethod,
         credToken: this.props.credToken,
         onSubmit: this.props.onValidateCredentials,
         onCancel: this.props.onCancel
-      }, void 0, false) : view === 'reset' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(react__WEBPACK_IMPORTED_MODULE_0__.Suspense, {
-        fallback: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)("div", {
+      }, void 0, false) : view === 'reset' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(react__WEBPACK_IMPORTED_MODULE_0__.Suspense, {
+        fallback: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)("div", {
           className: "panel-form-row",
-          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
+          children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(react_intl__WEBPACK_IMPORTED_MODULE_1__.FormattedMessage, {
             id: "loading_note",
             defaultMessage: "Loading...",
             description: "Message shown when component is loading"
           }, void 0, false)
         }, void 0, false),
-        children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_14__.jsxDEV)(PasswordResetView, {
+        children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_15__.jsxDEV)(PasswordResetView, {
           tinode: this.props.tinode,
           reqCredMethod: this.props.reqCredMethod,
           onShowCountrySelector: this.props.onShowCountrySelector,
@@ -5547,7 +5656,7 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
   getBlankState() {
     const settings = _lib_local_storage_js__WEBPACK_IMPORTED_MODULE_15__["default"].getObject('settings') || {};
     const persist = !!_lib_local_storage_js__WEBPACK_IMPORTED_MODULE_15__["default"].getObject('keep-logged-in');
-    if (!settings.wallpaper) {
+    if (!settings.wallpaper || settings.wallpaper.endsWith('/a00.png')) {
       const wallpaper = (0,_lib_utils_js__WEBPACK_IMPORTED_MODULE_18__.defaultWallpaper)();
       settings.wallpaper = wallpaper.name || '';
       settings.wallpaperSize = wallpaper.size || 0;
@@ -5578,7 +5687,7 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
       errorLevel: null,
       errorAction: undefined,
       errorActionText: null,
-      sidePanelSelected: 'login',
+      sidePanelSelected: 'onboarding',
       sidePanelTitle: null,
       sidePanelAvatar: null,
       myTrustedBadges: [],
@@ -5885,7 +5994,7 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
       newTopicTabSelected: hash.params.tab
     };
     if (hash.path && hash.path.length > 0) {
-      if (['acc_general', 'archive', 'blocked', 'contacts', 'cred', 'crop', 'edit', 'general', 'newtpk', 'notif', 'register', 'reset', 'security', 'settings', 'support', 'wallpapers', ''].includes(hash.path[0])) {
+      if (['acc_general', 'archive', 'blocked', 'contacts', 'cred', 'crop', 'edit', 'general', 'login', 'newtpk', 'notif', 'onboarding', 'register', 'reset', 'security', 'settings', 'support', 'wallpapers', ''].includes(hash.path[0])) {
         newState.sidePanelSelected = hash.path[0];
       } else {
         console.warn("Unknown sidepanel view", hash.path[0]);
@@ -6499,14 +6608,26 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
   }
   applyColorSchema(schema, systemSchema, size) {
     const effectiveSchema = schema == 'auto' ? systemSchema : schema;
-    document.documentElement.style.setProperty('--wallpaper-invert', effectiveSchema == 'dark' && size ? '1' : '0');
-    document.documentElement.style.setProperty('--wallpaper-brightness', effectiveSchema == 'dark' && !size ? '0.5' : '1');
+    this.applyWallpaperSettings(this.state.wallpaper, size, this.state.wallpaperBlur, effectiveSchema);
   }
   handleSelectWallpapers() {
     this.handleError();
     _lib_navigation_js__WEBPACK_IMPORTED_MODULE_16__["default"].navigateTo(_lib_navigation_js__WEBPACK_IMPORTED_MODULE_16__["default"].setUrlSidePanel(window.location.hash, 'wallpapers'));
   }
   applyWallpaperSettings(wallpaper, size, blur, effectiveSchema) {
+    const isDefaultSvg = !wallpaper || wallpaper.includes('chat-wallpaper-') || wallpaper.endsWith('/a00.png');
+    if (isDefaultSvg) {
+      const svgUrl = effectiveSchema == 'dark' ? '../img/chat-wallpaper-dark.svg' : '../img/chat-wallpaper-light.svg';
+      document.documentElement.style.setProperty('--wallpaper-url', `url('${svgUrl}')`);
+      document.documentElement.style.setProperty('--wallpaper-repeat', 'no-repeat');
+      document.documentElement.style.setProperty('--wallpaper-blur', '0px');
+      document.documentElement.style.setProperty('--wallpaper-size', 'cover');
+      document.documentElement.style.setProperty('--wallpaper-position', 'center');
+      document.documentElement.style.setProperty('--wallpaper-invert', '0');
+      document.documentElement.style.setProperty('--wallpaper-brightness', '1');
+      document.documentElement.style.setProperty('--wallpaper-opacity', '1');
+      return;
+    }
     document.documentElement.style.setProperty('--wallpaper-url', `url('${wallpaper}')`);
     document.documentElement.style.setProperty('--wallpaper-repeat', size ? 'repeat' : 'no-repeat');
     document.documentElement.style.setProperty('--wallpaper-blur', size ? '0px' : `${blur}px`);
@@ -6514,6 +6635,7 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
     document.documentElement.style.setProperty('--wallpaper-position', size ? 'unset' : 'center');
     document.documentElement.style.setProperty('--wallpaper-invert', effectiveSchema == 'dark' && size ? '1' : '0');
     document.documentElement.style.setProperty('--wallpaper-brightness', effectiveSchema == 'dark' && !size ? '0.5' : '1');
+    document.documentElement.style.setProperty('--wallpaper-opacity', '0.55');
   }
   handleWallpaperSelected(wallpaper, size, blur) {
     this.handleError();
@@ -6530,13 +6652,14 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
     this.applyWallpaperSettings(wallpaper, size, blur, this.state.colorSchema == 'auto' ? this.state.systemColorSchema : this.state.colorSchema);
   }
   handleChangeTextSize(size) {
+    const numSize = Number(size) || _config_js__WEBPACK_IMPORTED_MODULE_10__.DEFAULT_TEXT_SIZE;
     this.setState({
-      textSize: size | 0
+      textSize: numSize
     });
     _lib_local_storage_js__WEBPACK_IMPORTED_MODULE_15__["default"].updateObject('settings', {
-      textSize: size
+      textSize: numSize
     });
-    document.documentElement.style.setProperty('--message-text-size', `${size}pt`);
+    document.documentElement.style.setProperty('--message-text-size', `${numSize}pt`);
   }
   handleSendOnEnter(option) {
     this.setState({
@@ -6983,14 +7106,6 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
       title: this.props.intl.formatMessage(messages.menu_item_info),
       icon: 'info',
       handler: this.handleShowInfoView
-    } : null, subscribed && p2p && webrtc ? {
-      title: this.props.intl.formatMessage(messages.menu_item_audio_call),
-      icon: 'call',
-      handler: this.handleStartAudioCall
-    } : null, subscribed && p2p && webrtc ? {
-      title: this.props.intl.formatMessage(messages.menu_item_video_call),
-      icon: 'videocam',
-      handler: this.handleStartVideoCall
     } : null, subscribed ? 'messages_clear' : null, subscribed && deleter && !self ? 'messages_clear_hard' : null, self ? null : muted ? blocked ? null : 'topic_unmute' : 'topic_mute', self ? null : self_blocked ? 'topic_unblock' : 'topic_block', pinned ? 'topic_unpin' : 'topic_pin', archived ? 'topic_restore' : 'topic_archive', 'topic_delete'];
   }
   handleHideContextMenu() {
@@ -11694,7 +11809,7 @@ class SideNavbar extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCompo
           className: "material-icons",
           children: themeIcon
         }, void 0, false)
-      }, void 0, false) : null, this.props.state === 'login' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxDEV)(_menu_start_jsx__WEBPACK_IMPORTED_MODULE_5__["default"], {
+      }, void 0, false) : null, this.props.state === 'login' || this.props.state === 'onboarding' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxDEV)(_menu_start_jsx__WEBPACK_IMPORTED_MODULE_5__["default"], {
         onSignUp: this.props.onSignUp,
         onSettings: this.props.onSettings
       }, void 0, false) : this.props.state === 'contacts' ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_7__.jsxDEV)(_menu_contacts_jsx__WEBPACK_IMPORTED_MODULE_4__["default"], {

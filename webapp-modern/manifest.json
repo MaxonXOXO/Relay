@@ -1,7 +1,7 @@
 {
-  "name": "Tinode",
-  "short_name": "Tinode",
-  "description": "Tinode Web App.\nSee more at https://tinode.co/",
+  "name": "Relay",
+  "short_name": "Relay",
+  "description": "Relay Web Messenger",
   "categories": ["chat", "communication", "productivity"],
   "icons": [
     {
@@ -21,22 +21,9 @@
     }
   ],
   "start_url": "/",
-  "background_color": "silver",
-  "theme_color": "#3949AB",
+  "background_color": "#0b57d0",
+  "theme_color": "#0b57d0",
   "display": "standalone",
-  "gcm_sender_id": "103953800507",
-  "prefer_related_applications": true,
-  "related_applications": [
-    {
-      "platform": "play",
-      "url": "https://play.google.com/store/apps/details?id=co.tinode.tindroidx",
-      "id": "co.tinode.tindroidx"
-    },
-    {
-      "platform": "itunes",
-      "url": "https://apps.apple.com/us/app/tinode/id1483763538"
-    }
-  ],
   "permissions": {
     "audio-capture": {
       "description": "Required for recording voice messages"

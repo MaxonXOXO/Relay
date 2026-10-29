@@ -206,7 +206,7 @@ class TinodeWeb extends React.Component {
   getBlankState() {
     const settings = LocalStorageUtil.getObject('settings') || {};
     const persist = !!LocalStorageUtil.getObject('keep-logged-in');
-    if (!settings.wallpaper) {
+    if (!settings.wallpaper || settings.wallpaper.endsWith('/a00.png')) {
       const wallpaper = defaultWallpaper();
       settings.wallpaper = wallpaper.name || '';
       settings.wallpaperSize = wallpaper.size || 0;
@@ -252,7 +252,7 @@ class TinodeWeb extends React.Component {
       errorAction: undefined,
       errorActionText: null,
 
-      sidePanelSelected: 'login',
+      sidePanelSelected: 'onboarding',
       sidePanelTitle: null,
       sidePanelAvatar: null,
       myTrustedBadges: [],
@@ -601,7 +601,7 @@ class TinodeWeb extends React.Component {
     if (hash.path && hash.path.length > 0) {
       // Left-side panel selector.
       if (['acc_general','archive','blocked','contacts','cred','crop','edit','general',
-          'newtpk','notif','register','reset','security','settings','support','wallpapers',
+          'login','newtpk','notif','onboarding','register','reset','security','settings','support','wallpapers',
           ''].includes(hash.path[0])) {
         newState.sidePanelSelected = hash.path[0];
       } else {
@@ -1333,8 +1333,7 @@ class TinodeWeb extends React.Component {
 
   applyColorSchema(schema, systemSchema, size) {
     const effectiveSchema = schema == 'auto' ? systemSchema : schema;
-    document.documentElement.style.setProperty('--wallpaper-invert', effectiveSchema == 'dark' && size ? '1' : '0');
-    document.documentElement.style.setProperty('--wallpaper-brightness', effectiveSchema == 'dark' && !size ? '0.5' : '1');
+    this.applyWallpaperSettings(this.state.wallpaper, size, this.state.wallpaperBlur, effectiveSchema);
   }
 
   handleSelectWallpapers() {
@@ -1343,6 +1342,19 @@ class TinodeWeb extends React.Component {
   }
 
   applyWallpaperSettings(wallpaper, size, blur, effectiveSchema) {
+    const isDefaultSvg = !wallpaper || wallpaper.includes('chat-wallpaper-') || wallpaper.endsWith('/a00.png');
+    if (isDefaultSvg) {
+      const svgUrl = effectiveSchema == 'dark' ? '../img/chat-wallpaper-dark.svg' : '../img/chat-wallpaper-light.svg';
+      document.documentElement.style.setProperty('--wallpaper-url', `url('${svgUrl}')`);
+      document.documentElement.style.setProperty('--wallpaper-repeat', 'no-repeat');
+      document.documentElement.style.setProperty('--wallpaper-blur', '0px');
+      document.documentElement.style.setProperty('--wallpaper-size', 'cover');
+      document.documentElement.style.setProperty('--wallpaper-position', 'center');
+      document.documentElement.style.setProperty('--wallpaper-invert', '0');
+      document.documentElement.style.setProperty('--wallpaper-brightness', '1');
+      document.documentElement.style.setProperty('--wallpaper-opacity', '1');
+      return;
+    }
     document.documentElement.style.setProperty('--wallpaper-url', `url('${wallpaper}')`);
     document.documentElement.style.setProperty('--wallpaper-repeat', size ? 'repeat' : 'no-repeat');
     document.documentElement.style.setProperty('--wallpaper-blur', size ? '0px' : `${blur}px`);
@@ -1350,6 +1362,7 @@ class TinodeWeb extends React.Component {
     document.documentElement.style.setProperty('--wallpaper-position', size ? 'unset' : 'center');
     document.documentElement.style.setProperty('--wallpaper-invert', effectiveSchema == 'dark' && size ? '1' : '0');
     document.documentElement.style.setProperty('--wallpaper-brightness', effectiveSchema == 'dark' && !size ? '0.5' : '1');
+    document.documentElement.style.setProperty('--wallpaper-opacity', '0.55');
   }
 
   handleWallpaperSelected(wallpaper, size, blur) {
@@ -1361,9 +1374,10 @@ class TinodeWeb extends React.Component {
   }
 
   handleChangeTextSize(size) {
-    this.setState({textSize: size | 0});
-    LocalStorageUtil.updateObject('settings', {textSize: size});
-    document.documentElement.style.setProperty('--message-text-size', `${size}pt`);
+    const numSize = Number(size) || DEFAULT_TEXT_SIZE;
+    this.setState({textSize: numSize});
+    LocalStorageUtil.updateObject('settings', {textSize: numSize});
+    document.documentElement.style.setProperty('--message-text-size', `${numSize}pt`);
   }
 
   handleSendOnEnter(option) {
@@ -1835,16 +1849,6 @@ class TinodeWeb extends React.Component {
         title: this.props.intl.formatMessage(messages.menu_item_info),
         icon: 'info',
         handler: this.handleShowInfoView
-      } : null,
-      subscribed && p2p && webrtc ? {
-        title: this.props.intl.formatMessage(messages.menu_item_audio_call),
-        icon: 'call',
-        handler: this.handleStartAudioCall
-      } : null,
-      subscribed && p2p && webrtc ? {
-        title: this.props.intl.formatMessage(messages.menu_item_video_call),
-        icon: 'videocam',
-        handler: this.handleStartVideoCall
       } : null,
       subscribed ? 'messages_clear' : null,
       subscribed && deleter && !self ? 'messages_clear_hard' : null,

@@ -64,7 +64,7 @@ export default class SideNavbar extends React.PureComponent {
             <i className="material-icons">{themeIcon}</i>
           </a>
           : null}
-        {this.props.state === 'login' ?
+        {this.props.state === 'login' || this.props.state === 'onboarding' ?
             <MenuStart onSignUp={this.props.onSignUp} onSettings={this.props.onSettings} /> :
           this.props.state === 'contacts' ?
             <MenuContacts onNewTopic={this.props.onNewTopic} onSettings={this.props.onSettings} /> :

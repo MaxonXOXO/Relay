@@ -20,13 +20,14 @@
   --caption-panel-height: 4.4rem;
 
   /* Wallpaper */
-  --wallpaper-url: url('../img/bkg/a00.png');
-  --wallpaper-repeat: repeat;
+  --wallpaper-url: url('../img/chat-wallpaper-light.svg');
+  --wallpaper-repeat: no-repeat;
   --wallpaper-blur: 0px;
   --wallpaper-invert: 0;
   --wallpaper-brightness: 1;
-  --wallpaper-size: contain;
+  --wallpaper-size: cover;
   --wallpaper-position: center;
+  --wallpaper-opacity: 1;
 
   /* Brand & Accent Fallback Tokens */
   --brand-accent-light: #0b57d0;
@@ -332,7 +333,7 @@ html, body {
   width: 100%;
   height: 100dvh;
   width: 100dvw;
-  font-size: 10.5pt;
+  font-size: var(--message-text-size, 10.5pt);
   color: var(--clr-text-primary);
   overflow: hidden;
   background-color: var(--clr-body-background);
@@ -2139,7 +2140,8 @@ img.channel {
   filter: blur(var(--wallpaper-blur))
     invert(var(--wallpaper-invert))
     brightness(var(--wallpaper-brightness));
-  opacity: 0.55;
+  opacity: var(--wallpaper-opacity, 1);
+  contain: paint;
   pointer-events: none;
   z-index: 0;
 }
@@ -2818,24 +2820,28 @@ video {
   box-shadow: 0 1px 3px var(--clr-shadow-bubble-drop);
 }
 
+.chat-box li {
+  -webkit-touch-callout: none;
+}
+
 .chat-box li.single {
-  margin-top: 0.25rem;
-  margin-bottom: 0.65rem;
+  margin-top: 0.4rem;
+  margin-bottom: 1rem;
 }
 
 .chat-box li.first {
-  margin-top: 0.25rem;
-  margin-bottom: 0.15rem;
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
 }
 
 .chat-box li.middle {
-  margin-top: 0.12rem;
-  margin-bottom: 0.12rem;
+  margin-top: 0.3rem;
+  margin-bottom: 0.3rem;
 }
 
 .chat-box li.last {
-  margin-top: 0.12rem;
-  margin-bottom: 0.65rem;
+  margin-top: 0.3rem;
+  margin-bottom: 1rem;
 }
 
 .left .bubble {
@@ -4305,3 +4311,332 @@ div.toast.show {
     border-radius: unset;
   }
 }
+
+/* ==========================================================================
+   Relay Onboarding, Lounge Card & Text Size Slider Styles
+   ========================================================================== */
+
+.onboarding-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 1.5rem 1.4rem 1.75rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  text-align: center;
+  background: linear-gradient(180deg, var(--clr-bright) 0%, var(--clr-background-blue-gray-50) 100%);
+}
+
+.onboarding-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding-top: 0.5rem;
+}
+
+.onboarding-logo-wrap {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 30% 25%, rgba(66, 165, 245, 0.16), rgba(11, 87, 208, 0.08));
+  box-shadow: 0 0.5rem 1.25rem rgba(11, 87, 208, 0.14);
+  margin-bottom: 0.25rem;
+}
+
+.onboarding-logo {
+  width: 3.35rem;
+  height: 3.35rem;
+  object-fit: contain;
+}
+
+.onboarding-app-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--clr-text-primary);
+}
+
+.onboarding-tagline {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--clr-text-secondary);
+}
+
+.onboarding-card {
+  background-color: var(--clr-bright);
+  border: 1px solid var(--clr-border-light);
+  border-radius: 1.25rem;
+  padding: 1.4rem 1.25rem;
+  margin: 1rem 0;
+  box-shadow: 0 0.5rem 1.5rem var(--clr-shadow-faint);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.onboarding-icon-badge {
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 50%;
+  background: rgba(11, 87, 208, 0.12);
+  color: var(--clr-primary-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.onboarding-icon-badge .material-icons {
+  font-size: 1.75rem;
+  color: var(--clr-primary-accent);
+}
+
+.onboarding-slide-title {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--clr-text-primary);
+}
+
+.onboarding-slide-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--clr-text-secondary);
+}
+
+.onboarding-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
+
+.onboarding-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  border: none;
+  padding: 0;
+  background-color: var(--clr-border-gray);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.onboarding-dot.active {
+  width: 1.4rem;
+  background-color: var(--clr-primary-accent);
+}
+
+.onboarding-features-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.onboarding-feature-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.85rem;
+  background-color: var(--clr-bright);
+  border: 1px solid var(--clr-border-light);
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--clr-text-primary);
+}
+
+.onboarding-feature-pill .material-icons {
+  font-size: 1.15rem;
+  color: var(--clr-primary-accent);
+}
+
+.onboarding-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.onboarding-cta-primary,
+.onboarding-cta-secondary {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.75rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.onboarding-cta-primary .material-icons {
+  font-size: 1.15rem;
+  color: inherit;
+}
+
+/* Relay Desktop Lounge Card */
+.relay-lounge-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 24rem;
+  padding: 2.25rem 2rem;
+  border-radius: 1.5rem;
+  background-color: var(--clr-bright);
+  border: 1px solid var(--clr-border-light);
+  box-shadow: 0 0.75rem 2rem var(--clr-shadow-faint);
+}
+
+.relay-lounge-logo-wrap {
+  width: 5.2rem;
+  height: 5.2rem;
+  border-radius: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 30% 25%, rgba(66, 165, 245, 0.16), rgba(11, 87, 208, 0.08));
+  margin-bottom: 0.85rem;
+}
+
+.relay-lounge-card #logo {
+  width: 3.8rem;
+  height: 3.8rem;
+  margin: 0;
+}
+
+.relay-lounge-title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--clr-text-primary);
+}
+
+.relay-lounge-subtitle {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--clr-text-secondary);
+}
+
+.relay-lounge-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.relay-lounge-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background-color: var(--clr-background-blue-gray-50);
+  color: var(--clr-text-secondary);
+  border: 1px solid var(--clr-border-light);
+}
+
+.relay-lounge-badge .material-icons {
+  font-size: 0.95rem;
+  color: var(--clr-primary-accent);
+}
+
+.relay-lounge-version {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--clr-text-muted);
+}
+
+/* Text Size Slider & Interactive Presets */
+.text-size-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.text-size-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background-color: rgba(11, 87, 208, 0.12);
+  color: var(--clr-primary-accent);
+}
+
+.relay-range-slider {
+  width: 100%;
+  margin: 0.4rem 0 0.65rem;
+  cursor: pointer;
+  accent-color: var(--clr-primary-accent);
+}
+
+.text-size-steps {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.text-size-step {
+  flex: 1;
+  padding: 0.32rem 0.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--clr-border-light);
+  background-color: var(--clr-background-blue-gray-50);
+  color: var(--clr-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.text-size-step:hover {
+  border-color: var(--clr-primary-accent);
+  color: var(--clr-primary-accent);
+}
+
+.text-size-step.active {
+  background-color: var(--clr-primary-accent);
+  border-color: var(--clr-primary-accent);
+  color: #ffffff;
+}
+
+.text-size-preview-box {
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.85rem;
+  background-color: var(--clr-background-blue-gray-50);
+  border: 1px solid var(--clr-border-light);
+}
+
+.text-size-preview-bubble {
+  display: inline-block;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.85rem 0.85rem 0.85rem 0.25rem;
+  background-color: var(--clr-primary-accent);
+  color: #ffffff;
+  line-height: 1.4;
+}
+
