@@ -31,7 +31,6 @@ fi
 
 echo "==> [3/5] Starting Relay & MySQL containers via Docker Compose..."
 cd "$APP_DIR"
-docker compose down -v 2>/dev/null || true
 docker compose up -d
 
 echo "==> [4/5] Configuring Nginx Reverse Proxy (HTTP + WebSockets)..."
