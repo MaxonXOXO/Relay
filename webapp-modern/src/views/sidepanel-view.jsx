@@ -123,7 +123,7 @@ class SidepanelView extends React.PureComponent {
 
   render() {
     const {formatMessage} = this.props.intl;
-    const view = this.props.state || (this.props.myUserId ? 'contacts' : 'onboarding');
+    const view = this.props.state || (this.props.myUserId ? 'contacts' : 'login');
 
     let title, avatar, badges;
     if (view == 'contacts') {
@@ -137,7 +137,7 @@ class SidepanelView extends React.PureComponent {
     }
 
     let onCancel;
-    if (['onboarding', 'contacts'].indexOf(view) == -1) {
+    if (['login', 'onboarding', 'contacts'].indexOf(view) == -1) {
       onCancel = this.props.onCancel;
     }
 

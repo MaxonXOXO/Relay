@@ -2,7 +2,7 @@
 import React, { Suspense } from 'react';
 import { FormattedMessage, defineMessages, injectIntl } from 'react-intl';
 
-import { initializeApp as firebaseInitApp } from 'firebase/app';
+import { initializeApp as firebaseInitApp, getApps as firebaseGetApps, getApp as firebaseGetApp } from 'firebase/app';
 import { getMessaging as firebaseGetMessaging, getToken as firebaseGetToken,
   deleteToken as firebaseDelToken, onMessage as firebaseOnMessage } from 'firebase/messaging';
 
@@ -252,7 +252,7 @@ class TinodeWeb extends React.Component {
       errorAction: undefined,
       errorActionText: null,
 
-      sidePanelSelected: 'onboarding',
+      sidePanelSelected: 'login',
       sidePanelTitle: null,
       sidePanelAvatar: null,
       myTrustedBadges: [],
@@ -402,12 +402,9 @@ class TinodeWeb extends React.Component {
       this.tinode.onInfoMessage = this.handleInfoMessage;
       this.tinode.onDataMessage = this.handleDataMessage;
     }).then(_ => {
-      // Initialize desktop alerts.
+      // Initialize desktop alerts silently (never show error banner on startup).
       if (this.state.desktopAlertsEnabled) {
-        this.initFCMessaging().catch(_ => {
-          // do nothing: handled earlier.
-          // catch needed to pervent unnecessary logging of error.
-        });
+        this.initFCMessaging(true).catch(_ => {});
       }
 
       // Read contacts from cache.
@@ -430,8 +427,15 @@ class TinodeWeb extends React.Component {
       const parsedNav = HashNavigation.parseUrlHash(window.location.hash);
       // Maybe navigate to home screen.
       if (!['cred', 'reset', 'register'].includes(parsedNav.path[0])) {
-        // Save possible topic name.
-        this.setState({requestedTopic: parsedNav.path[1]});
+        // Save possible topic name and any incoming call action from notification click.
+        const nextInitState = {requestedTopic: parsedNav.path[1]};
+        if (parsedNav.params && parsedNav.params.call_action) {
+          nextInitState.pendingCallAction = parsedNav.params.call_action;
+          nextInitState.pendingCallTopic = parsedNav.path[1];
+          nextInitState.pendingCallSeq = Number(parsedNav.params.call_seq) || undefined;
+          nextInitState.pendingCallAudioOnly = parsedNav.params.call_audio === 'true';
+        }
+        this.setState(nextInitState);
         const path = parsedNav.params && parsedNav.params.cred_done ?
           HashNavigation.addUrlParam('', 'cred_done', parsedNav.params.cred_done):
           '';
@@ -471,17 +475,61 @@ class TinodeWeb extends React.Component {
     }
     if (data.type === 'call-action') {
       const topic = data.topic || this.state.callTopic;
-      const seq = data.seq || this.state.callSeq;
-      if (data.action === 'decline' && topic) {
+      const seq = Number(data.seq) || this.state.callSeq;
+      const audioOnly = data.audioOnly !== undefined ? !!data.audioOnly : this.state.callAudioOnly;
+      if (!topic) {
+        return;
+      }
+      if (!this.tinode || !this.tinode.isConnected() || !this.tinode.isAuthenticated()) {
+        this.setState({
+          requestedTopic: topic,
+          pendingCallAction: data.action,
+          pendingCallTopic: topic,
+          pendingCallSeq: seq,
+          pendingCallAudioOnly: audioOnly
+        });
+        if (this.tinode) {
+          this.tinode.reconnect();
+        }
+        return;
+      }
+      if (data.action === 'decline') {
         this.handleCallHangup(topic, seq);
         this.handleCallClose();
-      } else if (data.action === 'answer' && topic) {
-        this.handleCallAccept(topic, true, seq);
-      } else if (data.action === 'show' && topic) {
+      } else if (data.action === 'answer') {
+        if (this.state.callState === CALL_STATE_IN_PROGRESS && this.state.callTopic === topic) {
+          return;
+        }
+        this.handleCallAccept(topic, true, seq, audioOnly);
+      } else if (data.action === 'show') {
         this.handleTopicSelected(topic);
       }
       return;
     }
+
+    // If a WebRTC call push arrives from FCM/ServiceWorker, trigger incoming call state & reconnect immediately
+    // even if the WebSocket was suspended in the background.
+    if (data.webrtc && data.topic) {
+      if (data.webrtc === CALL_HEAD_STARTED) {
+        const seq = Number(data.seq) || 0;
+        const audioOnly = data.aonly === 'true' || data.aonly === true;
+        if (this.state.callState === CALL_STATE_NONE) {
+          this.setState({
+            callTopic: data.topic,
+            callState: CALL_STATE_INCOMING_RECEIVED,
+            callSeq: seq,
+            callAudioOnly: audioOnly
+          });
+          this.showCallNotification(data.topic, seq, audioOnly);
+        }
+        if (this.tinode && !this.tinode.isConnected()) {
+          this.tinode.reconnect();
+        }
+      } else if (this.state.callTopic === data.topic && this.state.callState === CALL_STATE_INCOMING_RECEIVED) {
+        this.handleCallClose();
+      }
+    }
+
     this.tinode.oobNotification(data);
   }
 
@@ -517,56 +565,129 @@ class TinodeWeb extends React.Component {
     });
   }
 
-  initFCMessaging() {
+  registerDeviceTokenWithServer(token) {
+    if (!this.tinode || !token) {
+      return;
+    }
+    // Reset cached _deviceToken in tinode-sdk so it always sends {hi: {dev: token}} once authenticated.
+    this.tinode._deviceToken = null;
+    this.tinode.setDeviceToken(token);
+  }
+
+  scheduleFCMOnUserGesture() {
+    if (this._fcmGestureScheduled || typeof window === 'undefined') {
+      return;
+    }
+    this._fcmGestureScheduled = true;
+    const handler = () => {
+      this._fcmGestureScheduled = false;
+      window.removeEventListener('click', handler, true);
+      window.removeEventListener('touchstart', handler, true);
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        Notification.requestPermission().then(perm => {
+          if (perm === 'granted') {
+            this.initFCMessaging(true).catch(_ => {});
+          }
+        }).catch(_ => {});
+      } else if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        this.initFCMessaging(true).catch(_ => {});
+      }
+    };
+    window.addEventListener('click', handler, { capture: true, once: true });
+    window.addEventListener('touchstart', handler, { capture: true, once: true });
+  }
+
+  initFCMessaging(silent = false) {
     const {formatMessage, locale} = this.props.intl;
     const onError = (msg, err) => {
-      console.error(msg, err);
-      this.handleError(formatMessage(messages.push_init_failed), 'err');
+      console.warn(msg, err);
+      if (!silent) {
+        this.handleError(formatMessage(messages.push_init_failed), 'err');
+      }
       this.setState({firebaseToken: null});
       LocalStorageUtil.updateObject('settings', {desktopAlerts: false});
-    }
+    };
 
     try {
-      this.fcm = firebaseGetMessaging(firebaseInitApp(FIREBASE_INIT, BASE_APP_NAME));
-      return navigator.serviceWorker.getRegistration('/service-worker.js').then(reg => {
-        return reg || navigator.serviceWorker.register('/service-worker.js').then(reg => {
-          this.checkForAppUpdate(reg);
-          return reg;
-        });
+      if (typeof Notification === 'undefined' || !navigator.serviceWorker) {
+        return Promise.resolve(null);
+      }
+
+      if (Notification.permission === 'denied') {
+        if (!silent) {
+          onError('Notification permission denied', null);
+        }
+        return Promise.resolve(null);
+      }
+
+      // On mobile browsers/PWAs, Notification.requestPermission() is blocked unless triggered by a user gesture.
+      // When called silently on mount/background, defer permission prompt to the first user tap.
+      if (silent && Notification.permission === 'default') {
+        this.scheduleFCMOnUserGesture();
+        return Promise.resolve(null);
+      }
+
+      // If called from an explicit user action while permission is 'default', request permission synchronously first
+      // before awaiting ServiceWorker promises so mobile Safari/Chrome preserve transient user activation.
+      const permissionPromise = (Notification.permission === 'default')
+        ? Notification.requestPermission()
+        : Promise.resolve(Notification.permission);
+
+      if (!this.fcm) {
+        const app = firebaseGetApps().length > 0 ? firebaseGetApp() : firebaseInitApp(FIREBASE_INIT);
+        this.fcm = firebaseGetMessaging(app);
+      }
+
+      return permissionPromise.then(permission => {
+        if (permission !== 'granted') {
+          throw new Error('Notification permission not granted: ' + permission);
+        }
+        return navigator.serviceWorker.getRegistration('/service-worker.js');
       }).then(reg => {
-        // Pass locale and version config to the service worker.
-        (reg.active || reg.installing).postMessage(JSON.stringify({
-          type: 'config',
-          locale: locale,
-          version: PACKAGE_VERSION
-        }));
-        // Request token.
+        return reg || navigator.serviceWorker.register('/service-worker.js').then(newReg => {
+          this.checkForAppUpdate(newReg);
+          return newReg;
+        });
+      }).then(_ => {
+        return navigator.serviceWorker.ready;
+      }).then(reg => {
+        const sw = reg.active || reg.installing || reg.waiting;
+        if (sw) {
+          sw.postMessage(JSON.stringify({
+            type: 'config',
+            locale: locale,
+            version: PACKAGE_VERSION
+          }));
+        }
+        // Request token from active service worker registration.
         return TinodeWeb.requestFCMToken(this.fcm, reg);
       }).then(token => {
-        const persist = LocalStorageUtil.getObject('keep-logged-in');
-        if (token != this.state.firebaseToken) {
-          this.tinode.setDeviceToken(token);
-          if (persist) {
-            LocalStorageUtil.setObject('firebase-token', token);
-          }
+        if (!token) {
+          return null;
         }
-        this.setState({firebaseToken: token, desktopAlerts: true});
+        const persist = LocalStorageUtil.getObject('keep-logged-in');
+        this.registerDeviceTokenWithServer(token);
         if (persist) {
+          LocalStorageUtil.setObject('firebase-token', token);
           LocalStorageUtil.updateObject('settings', {desktopAlerts: true});
         }
+        this.setState({firebaseToken: token, desktopAlerts: true});
 
-        // Handhe FCM pushes
-        // (a) for channels always,
-        // (b) pushes when the app is in foreground but has no focus.
-        firebaseOnMessage(this.fcm, payload => { this.handlePushMessage(payload); });
+        if (!this._fcmOnMessageRegistered) {
+          this._fcmOnMessageRegistered = true;
+          firebaseOnMessage(this.fcm, payload => { this.handlePushMessage(payload); });
+        }
+        return token;
       }).catch(err => {
-        // SW registration or FCM has failed :(
-        onError(err);
-        throw err;
+        onError('FCM initialization skipped/failed:', err);
+        if (!silent) {
+          throw err;
+        }
+        return null;
       });
     } catch (err) {
-      onError(err);
-      return Promise.reject(err);
+      onError('FCM initialization error:', err);
+      return silent ? Promise.resolve(null) : Promise.reject(err);
     }
   }
 
@@ -710,6 +831,13 @@ class TinodeWeb extends React.Component {
         TinodeWeb.stateForError(this.props.intl.formatMessage(messages.cred_confirmed_successfully), 'info'));
     }
 
+    if (hash.params.call_action) {
+      newState.pendingCallAction = hash.params.call_action;
+      newState.pendingCallTopic = hash.path[1] || null;
+      newState.pendingCallSeq = Number(hash.params.call_seq) || undefined;
+      newState.pendingCallAudioOnly = hash.params.call_audio === 'true';
+    }
+
     this.setState(newState);
   }
 
@@ -725,7 +853,12 @@ class TinodeWeb extends React.Component {
   }
 
   handleVisibilityEvent() {
-    this.setState({applicationVisible: !document.hidden});
+    const visible = !document.hidden;
+    this.setState({applicationVisible: visible});
+    if (visible && this.tinode && !this.tinode.isConnected() && this.state.autoLogin) {
+      clearInterval(this.reconnectCountdown);
+      this.tinode.reconnect();
+    }
   }
 
   static stateForError(err, level, action, actionText) {
@@ -764,9 +897,8 @@ class TinodeWeb extends React.Component {
     }
 
     if (this.state.desktopAlertsEnabled && !this.state.firebaseToken) {
-      // Firefox and Safari: "The Notification permission may only be requested from inside a
-      // short running user-generated event handler".
-      this.initFCMessaging();
+      // Request notification permission inside the user-generated Login tap handler, silently ignoring if declined.
+      this.initFCMessaging(true).catch(_ => {});
     }
   }
 
@@ -938,13 +1070,12 @@ class TinodeWeb extends React.Component {
   handleLoginSuccessful() {
     this.handleError();
 
-    // Ensure FCM token is initialized and registered with the server for this user session.
+    // Force-send existing FCM token and verify/refresh token with the server on every login.
     if (this.state.firebaseToken) {
-      this.tinode.setDeviceToken(this.state.firebaseToken);
-    } else if (this.state.desktopAlertsEnabled) {
-      this.initFCMessaging().catch(_ => {});
-    } else if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-      Notification.requestPermission().catch(_ => {});
+      this.registerDeviceTokenWithServer(this.state.firebaseToken);
+    }
+    if (this.state.desktopAlertsEnabled) {
+      this.initFCMessaging(true).catch(_ => {});
     }
 
     // Hold a Web Lock while logged in so mobile/desktop browsers keep the WebSocket alive longer in background.
@@ -1136,6 +1267,10 @@ class TinodeWeb extends React.Component {
     }
 
     const me = this.tinode.getMeTopic();
+    if (!this._fetchedUnreadSeq) {
+      this._fetchedUnreadSeq = {};
+    }
+    const now = Date.now();
     me.contacts(c => {
       if (!c.topic && !c.user) {
         // Contacts expect c.topic to be set.
@@ -1146,6 +1281,22 @@ class TinodeWeb extends React.Component {
       if (this.state.topicSelected == c.topic) {
         newState.topicSelectedOnline = c.online;
         newState.topicSelectedAcs = c.acs;
+      }
+
+      // If a P2P contact has unread messages when the app opens or reconnects,
+      // fetch the latest message so any active incoming call rings immediately.
+      if (this.tinode.isAuthenticated() && Tinode.isP2PTopicName(c.topic) &&
+          c.unread > 0 && c.seq > 0 &&
+          c.topic !== this.state.topicSelected && c.topic !== this.state.requestedTopic &&
+          this._fetchedUnreadSeq[c.topic] !== c.seq) {
+        const touchedAge = c.touched ? (now - new Date(c.touched).getTime()) : 0;
+        if (touchedAge < 60000) {
+          this._fetchedUnreadSeq[c.topic] = c.seq;
+          const tpk = this.tinode.getTopic(c.topic);
+          if (!tpk || !tpk.isSubscribed()) {
+            this.tinode.oobNotification({what: 'msg', topic: c.topic, seq: c.seq});
+          }
+        }
       }
     });
 
@@ -2074,6 +2225,9 @@ class TinodeWeb extends React.Component {
   }
 
   handleStartVideoCall() {
+    if (this.state.desktopAlertsEnabled && !this.state.firebaseToken) {
+      this.initFCMessaging(true).catch(_ => {});
+    }
     this.setState({
       callTopic: this.state.topicSelected,
       callState: CALL_STATE_OUTGOING_INITATED,
@@ -2082,6 +2236,9 @@ class TinodeWeb extends React.Component {
   }
 
   handleStartAudioCall() {
+    if (this.state.desktopAlertsEnabled && !this.state.firebaseToken) {
+      this.initFCMessaging(true).catch(_ => {});
+    }
     this.setState({
       callTopic: this.state.topicSelected,
       callState: CALL_STATE_OUTGOING_INITATED,
@@ -2169,7 +2326,7 @@ class TinodeWeb extends React.Component {
     });
   }
 
-  handleCallAccept(topicName, setCallTopic, callSeq) {
+  handleCallAccept(topicName, setCallTopic, callSeq, audioOnly) {
     const targetTopic = topicName || this.state.callTopic;
     this.closeCallNotification(targetTopic);
     const topic = this.tinode.getTopic(targetTopic);
@@ -2180,10 +2337,15 @@ class TinodeWeb extends React.Component {
       clearTimeout(topic._delayedLeaveTimer);
       topic._delayedLeaveTimer = null;
     }
+    const resolvedAudioOnly = audioOnly !== undefined ? !!audioOnly : this.state.callAudioOnly;
     if (topic.isSubscribed()) {
       this.handleTopicSelected(setCallTopic ? targetTopic : this.state.callTopic);
       const upd = {
-        callState: CALL_STATE_IN_PROGRESS
+        callState: CALL_STATE_IN_PROGRESS,
+        callAudioOnly: resolvedAudioOnly,
+        pendingCallAction: undefined,
+        pendingCallTopic: undefined,
+        pendingCallSeq: undefined
       };
       if (setCallTopic) {
         upd.callTopic = targetTopic;
@@ -2194,6 +2356,10 @@ class TinodeWeb extends React.Component {
       // We need to switch and subscribe to callTopic first.
       const upd = {
         callShouldStart: true,
+        callAudioOnly: resolvedAudioOnly,
+        pendingCallAction: undefined,
+        pendingCallTopic: undefined,
+        pendingCallSeq: undefined
       };
       if (setCallTopic) {
         upd.callTopic = targetTopic;
@@ -2233,7 +2399,23 @@ class TinodeWeb extends React.Component {
   }
 
   handleDataMessage(data) {
-    if (data.head && data.head.webrtc && data.head.webrtc == CALL_HEAD_STARTED && Tinode.isP2PTopicName(data.topic)) {
+    if (data.head && data.head.webrtc && Tinode.isP2PTopicName(data.topic)) {
+      if (data.head.webrtc != CALL_HEAD_STARTED) {
+        // Call ended, missed, or declined replacement message.
+        if (this.state.callTopic == data.topic && this.state.callState == CALL_STATE_INCOMING_RECEIVED) {
+          this.handleCallClose();
+        }
+        return;
+      }
+
+      // Ignore historical call invite messages older than 45 seconds.
+      if (data.ts) {
+        const ageMs = Date.now() - new Date(data.ts).getTime();
+        if (ageMs > 45000) {
+          return;
+        }
+      }
+
       // If it's a video call invite message.
       // See if we need to display incoming call UI.
       const topic = this.tinode.getTopic(data.topic);
@@ -2248,8 +2430,14 @@ class TinodeWeb extends React.Component {
         if (msg.head && msg.head.webrtc && msg.head.webrtc == CALL_HEAD_STARTED) {
           // This is a legit new call.
           if (data.from != this.state.myUserId) {
+            const audioOnly = !!msg.head.aonly;
+            // If user opened the app by tapping 'Answer' on the OS notification, auto-accept immediately.
+            if (this.state.pendingCallAction === 'answer' &&
+                (!this.state.pendingCallTopic || this.state.pendingCallTopic === data.topic)) {
+              this.handleCallAccept(data.topic, true, data.seq, audioOnly);
+              return;
+            }
             if (this.state.callState == CALL_STATE_NONE) {
-              const audioOnly = !!msg.head.aonly;
               // Incoming call: show in-app ringing overlay AND OS/PWA persistent call notification.
               this.setState({
                 callTopic: data.topic,
@@ -2258,8 +2446,8 @@ class TinodeWeb extends React.Component {
                 callAudioOnly: audioOnly
               });
               this.showCallNotification(data.topic, data.seq, audioOnly);
-            } else {
-              // Another call is either in progress or being established.
+            } else if (this.state.callTopic != data.topic) {
+              // Another call is either in progress or being established with someone else.
               // Reject the incoming call.
               this.handleCallHangup(data.topic, data.seq);
             }

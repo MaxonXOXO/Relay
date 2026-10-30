@@ -1,12 +1,21 @@
 // Must be located at the root.
 try {
-  importScripts('https://cdn.jsdelivr.net/npm/firebase@13.1.0/firebase-app-compat.js');
-  importScripts('https://cdn.jsdelivr.net/npm/firebase@13.1.0/firebase-messaging-compat.js');
-  importScripts('firebase-init.js');
-} catch (err) {
-  console.warn('Firebase scripts unavailable in service worker:', err);
+  importScripts('/umd/firebase-app-compat.js');
+  importScripts('/umd/firebase-messaging-compat.js');
+} catch (localErr) {
+  try {
+    importScripts('https://cdn.jsdelivr.net/npm/firebase@13.1.0/firebase-app-compat.js');
+    importScripts('https://cdn.jsdelivr.net/npm/firebase@13.1.0/firebase-messaging-compat.js');
+  } catch (cdnErr) {
+    console.warn('Firebase scripts unavailable in service worker:', cdnErr);
+  }
 }
-importScripts('version.js');
+try {
+  importScripts('/firebase-init.js?v=relay2');
+} catch (initErr) {
+  console.warn('firebase-init.js unavailable in service worker:', initErr);
+}
+importScripts('/version.js?v=relay2');
 
 // Channel to notify the webapp. There is no BroadcastChannel in Safari.
 const webAppChannel = (typeof BroadcastChannel == 'function') ?
@@ -286,7 +295,7 @@ self.addEventListener('notificationclick', event => {
   }
 
   const callAction = data.isCall ? (event.action === 'answer' ? 'answer' : 'show') : null;
-  const urlHash = '#/' + data.topic + (callAction ? `?call_action=${callAction}&call_seq=${data.seq || ''}` : '');
+  const urlHash = '#/' + data.topic + (callAction ? `?call_action=${callAction}&call_seq=${data.seq || ''}&call_audio=${data.audioOnly ? 'true' : 'false'}` : '');
 
   event.waitUntil(self.clients.matchAll({
     type: 'window',
@@ -297,7 +306,8 @@ self.addEventListener('notificationclick', event => {
         type: 'call-action',
         action: callAction,
         topic: data.topic,
-        seq: data.seq
+        seq: data.seq,
+        audioOnly: data.audioOnly
       } : null;
 
       if (actionMsg && webAppChannel) {
@@ -307,7 +317,7 @@ self.addEventListener('notificationclick', event => {
       let anyClient = null;
       for (let i = 0; i < windowClients.length; i++) {
         const url = new URL(windowClients[i].url);
-        if (actionMsg) {
+        if (actionMsg && !webAppChannel) {
           windowClients[i].postMessage(actionMsg);
         }
         if (url.hash.includes(data.topic)) {

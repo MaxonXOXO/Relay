@@ -138,6 +138,17 @@ func PrepareV1Notifications(rcpt *push.Receipt, config *configType) ([]*fcmv1.Me
 		config = &configType{}
 	}
 
+	// Look up sender display name so web/mobile push notifications can show the caller or sender name.
+	if fromUid := t.ParseUserId(rcpt.Payload.From); !fromUid.IsZero() {
+		if user, err := store.Users.Get(fromUid); err == nil && user != nil {
+			if pubMap, ok := user.Public.(map[string]any); ok {
+				if fn, ok := pubMap["fn"].(string); ok && fn != "" {
+					data["title"] = fn
+				}
+			}
+		}
+	}
+
 	var messages []*fcmv1.Message
 	var uids []t.Uid
 	for uid, devList := range devices {
@@ -170,12 +181,17 @@ func PrepareV1Notifications(rcpt *push.Receipt, config *configType) ([]*fcmv1.Me
 					msg.Android = androidNotificationConfig(rcpt.Payload.What, topic, userData, config)
 				case "ios":
 					msg.Apns = apnsNotificationConfig(rcpt.Payload.What, topic, userData, rcpt.To[uid].Unread, config)
-				case "web":
-					if config != nil && config.Webpush != nil && config.Webpush.Enabled {
-						msg.Webpush = &fcmv1.WebpushConfig{}
+				case "web", "":
+					ttl := strconv.Itoa(defaultTimeToLive)
+					if userData["webrtc"] == "started" {
+						ttl = "30"
 					}
-				case "":
-					// ignore
+					msg.Webpush = &fcmv1.WebpushConfig{
+						Headers: map[string]string{
+							"Urgency": "high",
+							"TTL":     ttl,
+						},
+					}
 				default:
 					logs.Warn.Println("fcm: unknown device platform", d.Platform)
 				}

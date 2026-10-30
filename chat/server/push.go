@@ -58,6 +58,10 @@ func (t *Topic) pushForData(fromUid types.Uid, data *MsgServerData, msgMarkedAsR
 	}
 
 	for uid, pud := range t.perUser {
+		if uid == fromUid && receipt.Payload.Webrtc == "started" {
+			// Never send an incoming call push notification to the caller's own devices.
+			continue
+		}
 		online := pud.online
 		if uid == fromUid && online == 0 {
 			// Make sure the sender's devices receive a silent push.

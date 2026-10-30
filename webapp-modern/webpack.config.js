@@ -62,6 +62,8 @@ module.exports = (env, argv) => {
         patterns: [
           { from: `node_modules/tinode-sdk/umd/tinode.${mode}.js`, to: `tinode.${mode}.js` },
           { from: `node_modules/tinode-sdk/umd/tinode.${mode}.js.map`, to: `tinode.${mode}.js.map` },
+          { from: 'node_modules/firebase/firebase-app-compat.js', to: 'firebase-app-compat.js' },
+          { from: 'node_modules/firebase/firebase-messaging-compat.js', to: 'firebase-messaging-compat.js' },
         ],
       }),
     ],
