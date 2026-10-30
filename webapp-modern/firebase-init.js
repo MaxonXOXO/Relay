@@ -1,15 +1,12 @@
-// Get these values for your project from the https://console.firebase.google.com/
+// Firebase configuration for Relay (relay-messenger-8a6ce)
 const FIREBASE_INIT = {
-  // Set up a web application in console then get the config object.
-  // The following keys are copied from the object:
-  apiKey: "AIzaSyD6X4ULR-RUsobvs1zZ2bHdJuPz39q2tbQ",
-  messagingSenderId: "114126160546",
-  projectId: "tinode-1000",
-  appId: "1:114126160546:web:aca6ea2981feb81fb44dfb",
-  // Project Settings -> Cloud Messaging -> Web configuration -> Web Push certificates.
-  // This value IS NOT included in the generated js config you get from
-  // the firebase console. It needs to be added separately.
-  messagingVapidKey: "BOgQVPOMzIMXUpsYGpbVkZoEBc0ifKY_f2kSU5DNDGYI6i6CoKqqxDd7w7PJ3FaGRBgVGJffldETumOx831jl58",
-  // Google analytics tag. Uncomment and use one you got from https://analytics.google.com/.
-  // measurementId: "G-ABCDEF1234"
+  apiKey: "AIzaSyAHCNGPghXNEBkJ9aTi1yzVqcIjdnuXQ4w",
+  authDomain: "relay-messenger-8a6ce.firebaseapp.com",
+  projectId: "relay-messenger-8a6ce",
+  storageBucket: "relay-messenger-8a6ce.firebasestorage.app",
+  messagingSenderId: "1030416625099",
+  appId: "1:1030416625099:web:c829652b1a175fc9deda4e",
+  measurementId: "G-G4E18435NK",
+  // Project Settings -> Cloud Messaging -> Web configuration -> Web Push certificates -> Key pair:
+  messagingVapidKey: "BKLp6oOhZCw9CO-bfZotF7MZudmeY1J7GnC3eOVOIRpg9w0OGLaLsun7-9F0W9Yk3sl4nq4wLRCuh78k_8S3cv4"
 };

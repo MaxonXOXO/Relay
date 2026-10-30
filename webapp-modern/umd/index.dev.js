@@ -6306,7 +6306,11 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
   }
   handleLoginSuccessful() {
     this.handleError();
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+    if (this.state.firebaseToken) {
+      this.tinode.setDeviceToken(this.state.firebaseToken);
+    } else if (this.state.desktopAlertsEnabled) {
+      this.initFCMessaging().catch(_ => {});
+    } else if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
       Notification.requestPermission().catch(_ => {});
     }
     if (navigator.locks && navigator.locks.request && !this._webLockHeld) {

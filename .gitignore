@@ -16,3 +16,6 @@ chat/exporter
 .DS_Store
 Thumbs.db
 *.log
+# Firebase Service Account Private Keys
+**/fcm-service-account.json
+**/*firebase-adminsdk*.json

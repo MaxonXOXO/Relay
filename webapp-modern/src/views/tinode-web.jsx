@@ -938,8 +938,12 @@ class TinodeWeb extends React.Component {
   handleLoginSuccessful() {
     this.handleError();
 
-    // Request notification permission so incoming calls & messages can alert in background/PWA.
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+    // Ensure FCM token is initialized and registered with the server for this user session.
+    if (this.state.firebaseToken) {
+      this.tinode.setDeviceToken(this.state.firebaseToken);
+    } else if (this.state.desktopAlertsEnabled) {
+      this.initFCMessaging().catch(_ => {});
+    } else if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
       Notification.requestPermission().catch(_ => {});
     }
 
