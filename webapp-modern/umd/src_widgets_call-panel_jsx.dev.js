@@ -149,6 +149,20 @@ class CallPanel extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCompon
       this.containerRef.current.addEventListener('pointerup', this.dragEnd);
     }
   }
+  componentDidUpdate() {
+    if (this.remoteRef.current && this.state.remoteStream) {
+      if (this.remoteRef.current.srcObject !== this.state.remoteStream) {
+        this.remoteRef.current.srcObject = this.state.remoteStream;
+      }
+      this.remoteRef.current.play().catch(_ => {});
+    }
+    if (this.localRef.current && this.state.localStream) {
+      if (this.localRef.current.srcObject !== this.state.localStream) {
+        this.localRef.current.srcObject = this.state.localStream;
+      }
+      this.localRef.current.play().catch(_ => {});
+    }
+  }
   componentWillUnmount() {
     const topic = this.props.tinode.getTopic(this.props.topic);
     topic.onInfo = this.previousOnInfo;
@@ -229,8 +243,12 @@ class CallPanel extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCompon
       this.setState({
         localStream: stream,
         waitingForPeer: true
+      }, () => {
+        if (this.localRef.current) {
+          this.localRef.current.srcObject = stream;
+          this.localRef.current.play().catch(_ => {});
+        }
       });
-      this.localRef.current.srcObject = stream;
       DIALING_SOUND.play();
       this.props.onInvite(this.props.topic, this.props.seq, this.props.callState, this.props.callAudioOnly);
     }).catch(this.handleGetUserMediaError);
@@ -292,15 +310,18 @@ class CallPanel extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCompon
       case VIDEO_MUTED_EVENT:
         this.setState({
           remoteVideoLive: false
-        }, _ => {
-          this.remoteRef.current.srcObject = this.state.remoteStream;
         });
         break;
       case VIDEO_UNMUTED_EVENT:
         this.setState({
           remoteVideoLive: true
-        }, _ => {
-          this.remoteRef.current.srcObject = this.state.remoteStream;
+        }, () => {
+          if (this.remoteRef.current) {
+            if (this.remoteRef.current.srcObject !== this.state.remoteStream && this.state.remoteStream) {
+              this.remoteRef.current.srcObject = this.state.remoteStream;
+            }
+            this.remoteRef.current.play().catch(_ => {});
+          }
         });
         break;
       default:
@@ -428,9 +449,21 @@ class CallPanel extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCompon
   }
   handleICEGatheringStateChangeEvent(event) {}
   handleTrackEvent(event) {
-    this.remoteRef.current.srcObject = event.streams[0];
+    const stream = event.streams && event.streams[0] ? event.streams[0] : this.state.remoteStream || new MediaStream();
+    if (!stream.getTracks().includes(event.track)) {
+      stream.addTrack(event.track);
+    }
     this.setState({
-      remoteStream: event.streams[0]
+      remoteStream: stream
+    }, () => {
+      if (this.remoteRef.current) {
+        if (this.remoteRef.current.srcObject !== stream) {
+          this.remoteRef.current.srcObject = stream;
+        }
+        this.remoteRef.current.play().catch(e => {
+          console.warn("Auto-play remote audio/video failed:", e);
+        });
+      }
     });
   }
   handleGetUserMediaError(e) {
@@ -461,9 +494,13 @@ class CallPanel extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCompon
         stream.addTrack(dummyVideo);
       }
       localStream = stream;
-      this.localRef.current.srcObject = stream;
       this.setState({
         localStream: stream
+      }, () => {
+        if (this.localRef.current) {
+          this.localRef.current.srcObject = stream;
+          this.localRef.current.play().catch(_ => {});
+        }
       });
       localStream.getTracks().forEach(track => {
         pc.addTrack(track, localStream);
@@ -607,36 +644,35 @@ class CallPanel extends react__WEBPACK_IMPORTED_MODULE_0__["default"].PureCompon
         }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
           className: "call-party peer",
           disabled: !remoteActive,
-          children: remoteActive ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
-            children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("video", {
-              ref: this.remoteRef,
-              autoPlay: true,
-              playsInline: true
+          children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("video", {
+            ref: this.remoteRef,
+            autoPlay: true,
+            playsInline: true,
+            style: {
+              display: remoteActive ? 'block' : 'none',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }
+          }, void 0, false), remoteActive ? (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
+            className: "caller-name inactive",
+            children: peerTitle
+          }, void 0, false) : (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
+            className: `caller-card${pulseAnimation} draggable`,
+            children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
+              className: "avatar-box",
+              children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)(_letter_tile_jsx__WEBPACK_IMPORTED_MODULE_2__["default"], {
+                authorizeURL: this.props.tinode.authorizeURL,
+                avatar: this.props.avatar,
+                topic: this.props.topic,
+                title: this.props.title
+              }, void 0, false)
             }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
-              className: "caller-name inactive",
+              className: "caller-name",
               children: peerTitle
             }, void 0, false)]
-          }, void 0, true) : (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
-            children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("audio", {
-              ref: this.remoteRef,
-              autoPlay: true
-            }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
-              className: `caller-card${pulseAnimation} draggable`,
-              children: [(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
-                className: "avatar-box",
-                children: (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)(_letter_tile_jsx__WEBPACK_IMPORTED_MODULE_2__["default"], {
-                  authorizeURL: this.props.tinode.authorizeURL,
-                  avatar: this.props.avatar,
-                  topic: this.props.topic,
-                  title: this.props.title
-                }, void 0, false)
-              }, void 0, false), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
-                className: "caller-name",
-                children: peerTitle
-              }, void 0, false)]
-            }, void 0, true)]
-          }, void 0, true)
-        }, void 0, false)]
+          }, void 0, true)]
+        }, void 0, true)]
       }, void 0, true), (0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("button", {
         className: "full-screen",
         onClick: this.props.onToggleMinimize,

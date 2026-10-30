@@ -167,6 +167,21 @@ class CallPanel extends React.PureComponent {
     }
   }
 
+  componentDidUpdate() {
+    if (this.remoteRef.current && this.state.remoteStream) {
+      if (this.remoteRef.current.srcObject !== this.state.remoteStream) {
+        this.remoteRef.current.srcObject = this.state.remoteStream;
+      }
+      this.remoteRef.current.play().catch(_ => {});
+    }
+    if (this.localRef.current && this.state.localStream) {
+      if (this.localRef.current.srcObject !== this.state.localStream) {
+        this.localRef.current.srcObject = this.state.localStream;
+      }
+      this.localRef.current.play().catch(_ => {});
+    }
+  }
+
   componentWillUnmount() {
     const topic = this.props.tinode.getTopic(this.props.topic);
     topic.onInfo = this.previousOnInfo;
@@ -258,8 +273,12 @@ class CallPanel extends React.PureComponent {
           // (so video can be enabled during the call if the user desires).
           stream.addTrack(this.emptyVideoTrack());
         }
-        this.setState({localStream: stream, waitingForPeer: true});
-        this.localRef.current.srcObject = stream;
+        this.setState({localStream: stream, waitingForPeer: true}, () => {
+          if (this.localRef.current) {
+            this.localRef.current.srcObject = stream;
+            this.localRef.current.play().catch(_ => {});
+          }
+        });
 
         DIALING_SOUND.play();
 
@@ -329,10 +348,17 @@ class CallPanel extends React.PureComponent {
   handleDataChannelMessage(event) {
     switch (event.data) {
     case VIDEO_MUTED_EVENT:
-      this.setState({remoteVideoLive: false}, _ => { this.remoteRef.current.srcObject = this.state.remoteStream; });
+      this.setState({remoteVideoLive: false});
       break;
     case VIDEO_UNMUTED_EVENT:
-      this.setState({remoteVideoLive: true}, _ => { this.remoteRef.current.srcObject = this.state.remoteStream; });
+      this.setState({remoteVideoLive: true}, () => {
+        if (this.remoteRef.current) {
+          if (this.remoteRef.current.srcObject !== this.state.remoteStream && this.state.remoteStream) {
+            this.remoteRef.current.srcObject = this.state.remoteStream;
+          }
+          this.remoteRef.current.play().catch(_ => {});
+        }
+      });
       break;
     default:
       break;
@@ -477,9 +503,24 @@ class CallPanel extends React.PureComponent {
   }
 
   handleTrackEvent(event) {
-    // Remote video becomes available.
-    this.remoteRef.current.srcObject = event.streams[0];
-    this.setState({remoteStream: event.streams[0]});
+    const stream = (event.streams && event.streams[0])
+      ? event.streams[0]
+      : (this.state.remoteStream || new MediaStream());
+
+    if (!stream.getTracks().includes(event.track)) {
+      stream.addTrack(event.track);
+    }
+
+    this.setState({remoteStream: stream}, () => {
+      if (this.remoteRef.current) {
+        if (this.remoteRef.current.srcObject !== stream) {
+          this.remoteRef.current.srcObject = stream;
+        }
+        this.remoteRef.current.play().catch(e => {
+          console.warn("Auto-play remote audio/video failed:", e);
+        });
+      }
+    });
   }
 
   handleGetUserMediaError(e) {
@@ -522,8 +563,12 @@ class CallPanel extends React.PureComponent {
         stream.addTrack(dummyVideo);
       }
       localStream = stream;
-      this.localRef.current.srcObject = stream;
-      this.setState({localStream: stream});
+      this.setState({localStream: stream}, () => {
+        if (this.localRef.current) {
+          this.localRef.current.srcObject = stream;
+          this.localRef.current.play().catch(_ => {});
+        }
+      });
 
       localStream.getTracks().forEach(track => {
         pc.addTrack(track, localStream);
@@ -670,25 +715,31 @@ class CallPanel extends React.PureComponent {
             </div>
           </div>
           <div className="call-party peer" disabled={!remoteActive}>
-            {remoteActive ?
-              <>
-                <video ref={this.remoteRef} autoPlay playsInline />
-                <div className="caller-name inactive">{peerTitle}</div>
-              </> :
-              <>
-                <audio ref={this.remoteRef} autoPlay />
-                <div className={`caller-card${pulseAnimation} draggable`}>
-                  <div className="avatar-box">
-                    <LetterTile
-                      authorizeURL={this.props.tinode.authorizeURL}
-                      avatar={this.props.avatar}
-                      topic={this.props.topic}
-                      title={this.props.title} />
-                  </div>
-                  <div className="caller-name">{peerTitle}</div>
+            <video
+              ref={this.remoteRef}
+              autoPlay
+              playsInline
+              style={{
+                display: remoteActive ? 'block' : 'none',
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover'
+              }}
+            />
+            {remoteActive ? (
+              <div className="caller-name inactive">{peerTitle}</div>
+            ) : (
+              <div className={`caller-card${pulseAnimation} draggable`}>
+                <div className="avatar-box">
+                  <LetterTile
+                    authorizeURL={this.props.tinode.authorizeURL}
+                    avatar={this.props.avatar}
+                    topic={this.props.topic}
+                    title={this.props.title} />
                 </div>
-              </>
-            }
+                <div className="caller-name">{peerTitle}</div>
+              </div>
+            )}
           </div>
         </div>
         <button className="full-screen" onClick={this.props.onToggleMinimize}>

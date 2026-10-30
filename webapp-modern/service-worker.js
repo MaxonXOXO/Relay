@@ -11,11 +11,11 @@ try {
   }
 }
 try {
-  importScripts('/firebase-init.js?v=relay2');
+  importScripts('/firebase-init.js?v=relay3');
 } catch (initErr) {
   console.warn('firebase-init.js unavailable in service worker:', initErr);
 }
-importScripts('/version.js?v=relay2');
+importScripts('/version.js?v=relay3');
 
 // Channel to notify the webapp. There is no BroadcastChannel in Safari.
 const webAppChannel = (typeof BroadcastChannel == 'function') ?
@@ -251,6 +251,76 @@ if (typeof firebase !== 'undefined' && typeof FIREBASE_INIT !== 'undefined') {
     console.warn('Firebase messaging init skipped in service worker:', err);
   }
 }
+
+// Native W3C Push Event Handler: guarantees heads-up incoming call notifications
+// and message delivery across Android, iOS, Windows, and macOS even when the webapp is closed or minimized.
+self.addEventListener('push', event => {
+  let data = {};
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (_) {
+      try {
+        data = { content: event.data.text() };
+      } catch (__) {}
+    }
+  }
+  const payload = (data && data.data) ? data.data : (data || {});
+
+  // Broadcast to open Relay windows/tabs if any are active.
+  if (webAppChannel) {
+    webAppChannel.postMessage(payload);
+  }
+
+  // Handle incoming calls even when marked silent="true" by server.
+  if (payload.webrtc) {
+    if (payload.webrtc === 'started') {
+      event.waitUntil(showIncomingCallNotification({
+        topic: payload.topic,
+        seq: Number(payload.seq) || 0,
+        callerName: payload.title || 'Relay Contact',
+        audioOnly: payload.aonly === 'true'
+      }));
+      return;
+    } else {
+      event.waitUntil(closeCallNotifications(payload.topic));
+      if (payload.webrtc === 'missed') {
+        event.waitUntil(self.registration.showNotification(
+          self.i18nMessage('missed_call') || 'Missed Call',
+          {
+            body: payload.title ? `${payload.title} — missed call` : 'You missed a call on Relay',
+            icon: '/img/logo96.png',
+            badge: '/img/badge96.png',
+            tag: 'relay-missed-' + (payload.topic || 'call'),
+            data: { topic: payload.topic }
+          }
+        ));
+      }
+      return;
+    }
+  }
+
+  if (payload.silent === 'true') {
+    return;
+  }
+
+  const titles = { 'msg': 'new_message', 'sub': 'new_chat' };
+  const pushType = payload.what || 'msg';
+  const title = payload.title || self.i18nMessage(titles[pushType]) || 'New Message';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: payload.content || '',
+      icon: '/img/logo96.png',
+      badge: '/img/badge96.png',
+      tag: payload.topic || undefined,
+      renotify: true,
+      vibrate: [200, 100, 200],
+      data: {
+        topic: payload.topic
+      }
+    })
+  );
+});
 
 // Update service worker immediately for both the current client
 // and all other active clients.
