@@ -40,8 +40,18 @@ export default class CallIncoming extends React.Component {
     this.resetDesc(topic);
     if (this.props.callState == CALL_STATE_INCOMING_RECEIVED) {
       // play() throws if the user did not click the app first: https://goo.gl/xX8pDD.
+      RING_SOUND.currentTime = 0;
       RING_SOUND.play().catch(_ => {});
-      this.ringTimer = setInterval(_ => {RING_SOUND.play().catch(_ => {})}, 2000);
+      if (navigator.vibrate) {
+        try { navigator.vibrate([500, 250, 500]); } catch (_) {}
+      }
+      this.ringTimer = setInterval(_ => {
+        RING_SOUND.currentTime = 0;
+        RING_SOUND.play().catch(_ => {});
+        if (navigator.vibrate) {
+          try { navigator.vibrate([500, 250, 500]); } catch (_) {}
+        }
+      }, 2000);
       this.props.onRinging(this.props.topic, this.props.seq);
     }
   }
@@ -68,6 +78,9 @@ export default class CallIncoming extends React.Component {
     if (this.ringTimer != null) {
       clearInterval(this.ringTimer);
       RING_SOUND.pause();
+    }
+    if (navigator.vibrate) {
+      try { navigator.vibrate(0); } catch (_) {}
     }
     const topic = this.props.tinode.getTopic(this.props.topic);
     if (!topic) {
@@ -107,7 +120,7 @@ export default class CallIncoming extends React.Component {
   }
 
   handleAcceptCall() {
-    this.props.onAcceptCall(this.props.topic);
+    this.props.onAcceptCall(this.props.topic, true, this.props.seq);
   }
 
   handleRejectCall() {

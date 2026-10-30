@@ -5783,6 +5783,22 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
     } else {
       console.warn("Your browser does not support BroadcastChannel. Some features will not be available");
     }
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener('message', this.handlePushMessage);
+      navigator.serviceWorker.register('/service-worker.js').then(reg => {
+        this.checkForAppUpdate(reg);
+        const sw = reg.active || reg.installing || reg.waiting;
+        if (sw) {
+          sw.postMessage(JSON.stringify({
+            type: 'config',
+            locale: this.props.intl.locale,
+            version: _version_js__WEBPACK_IMPORTED_MODULE_12__.PACKAGE_VERSION
+          }));
+        }
+      }).catch(err => {
+        console.warn("Service worker registration skipped:", err);
+      });
+    }
     this.lastWakeUpCheck = new Date().getTime();
     this.wakeUpTicker = setInterval(_ => {
       const now = new Date().getTime();
@@ -5854,7 +5870,53 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
     return tinode;
   }
   handlePushMessage(payload) {
-    this.tinode.oobNotification(payload.data || {});
+    const data = payload && payload.data ? payload.data : payload;
+    if (!data) {
+      return;
+    }
+    if (data.type === 'call-action') {
+      const topic = data.topic || this.state.callTopic;
+      const seq = data.seq || this.state.callSeq;
+      if (data.action === 'decline' && topic) {
+        this.handleCallHangup(topic, seq);
+        this.handleCallClose();
+      } else if (data.action === 'answer' && topic) {
+        this.handleCallAccept(topic, true, seq);
+      } else if (data.action === 'show' && topic) {
+        this.handleTopicSelected(topic);
+      }
+      return;
+    }
+    this.tinode.oobNotification(data);
+  }
+  postToServiceWorker(msg) {
+    if (!navigator.serviceWorker) {
+      return;
+    }
+    navigator.serviceWorker.ready.then(reg => {
+      if (reg && reg.active) {
+        reg.active.postMessage(JSON.stringify(msg));
+      }
+    }).catch(_ => {});
+  }
+  showCallNotification(topicName, seq, audioOnly) {
+    const topic = this.tinode.getTopic(topicName);
+    const callerName = topic && topic.public && topic.public.fn ? topic.public.fn : 'Relay Contact';
+    const avatar = topic && topic.public && topic.public.photo ? (0,_lib_blob_helpers_js__WEBPACK_IMPORTED_MODULE_13__.makeImageUrl)(topic.public.photo) : '/img/logo192.png';
+    this.postToServiceWorker({
+      type: 'incoming-call',
+      topic: topicName,
+      seq: seq,
+      callerName: callerName,
+      audioOnly: !!audioOnly,
+      avatar: avatar
+    });
+  }
+  closeCallNotification(topicName) {
+    this.postToServiceWorker({
+      type: 'call-ended',
+      topic: topicName
+    });
   }
   initFCMessaging() {
     const {
@@ -6244,6 +6306,15 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
   }
   handleLoginSuccessful() {
     this.handleError();
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().catch(_ => {});
+    }
+    if (navigator.locks && navigator.locks.request && !this._webLockHeld) {
+      this._webLockHeld = true;
+      navigator.locks.request('relay-active-session', () => new Promise(_ => {})).catch(_ => {
+        this._webLockHeld = false;
+      });
+    }
     if (_lib_local_storage_js__WEBPACK_IMPORTED_MODULE_15__["default"].getObject('keep-logged-in')) {
       _lib_local_storage_js__WEBPACK_IMPORTED_MODULE_15__["default"].setObject('auth-token', this.tinode.getAuthToken());
     }
@@ -6320,9 +6391,18 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
     } else if (what == 'msg' && cont) {
       const topic = this.tinode.getTopic(cont.topic);
       const archived = topic && topic.isArchived();
-      if (cont.unread > 0 && this.state.messageSounds && !archived) {
-        if (document.hidden || this.state.topicSelected != cont.topic) {
-          POP_SOUND.play().catch(_ => {});
+      if (cont.unread > 0) {
+        if (!topic || !topic.isSubscribed()) {
+          this.tinode.oobNotification({
+            what: 'msg',
+            topic: cont.topic,
+            seq: cont.seq
+          });
+        }
+        if (this.state.messageSounds && !archived) {
+          if (document.hidden || this.state.topicSelected != cont.topic) {
+            POP_SOUND.play().catch(_ => {});
+          }
         }
       }
       this.resetContactList();
@@ -7320,6 +7400,7 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
     if (this.callTimeoutTimer) {
       clearTimeout(this.callTimeoutTimer);
     }
+    this.closeCallNotification(this.state.callTopic);
     this.setState({
       callTopic: undefined,
       callState: _constants_js__WEBPACK_IMPORTED_MODULE_11__.CALL_STATE_NONE,
@@ -7327,24 +7408,35 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
     });
   }
   handleCallAccept(topicName, setCallTopic, callSeq) {
-    const topic = this.tinode.getTopic(topicName);
+    const targetTopic = topicName || this.state.callTopic;
+    this.closeCallNotification(targetTopic);
+    const topic = this.tinode.getTopic(targetTopic);
     if (!topic) {
       return;
     }
+    if (topic._delayedLeaveTimer) {
+      clearTimeout(topic._delayedLeaveTimer);
+      topic._delayedLeaveTimer = null;
+    }
     if (topic.isSubscribed()) {
-      this.handleTopicSelected(setCallTopic ? topicName : this.state.callTopic);
+      this.handleTopicSelected(setCallTopic ? targetTopic : this.state.callTopic);
       const upd = {
         callState: _constants_js__WEBPACK_IMPORTED_MODULE_11__.CALL_STATE_IN_PROGRESS
       };
       if (setCallTopic) {
-        upd.callTopic = topicName;
-        upd.callSeq = callSeq;
+        upd.callTopic = targetTopic;
+        upd.callSeq = callSeq || this.state.callSeq;
       }
       this.setState(upd);
     } else {
-      this.setState({
+      const upd = {
         callShouldStart: true
-      }, _ => this.handleTopicSelected(this.state.callTopic));
+      };
+      if (setCallTopic) {
+        upd.callTopic = targetTopic;
+        upd.callSeq = callSeq || this.state.callSeq;
+      }
+      this.setState(upd, _ => this.handleTopicSelected(targetTopic));
     }
   }
   handleInfoMessage(info) {
@@ -7354,6 +7446,7 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
     switch (info.event) {
       case 'accept':
         if (tinode_sdk__WEBPACK_IMPORTED_MODULE_4__.Tinode.isMeTopicName(info.topic) && this.tinode.isMe(info.from)) {
+          this.closeCallNotification(info.src || this.state.callTopic);
           this.setState({
             callTopic: null,
             callState: _constants_js__WEBPACK_IMPORTED_MODULE_11__.CALL_STATE_NONE,
@@ -7377,16 +7470,22 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
     if (data.head && data.head.webrtc && data.head.webrtc == _constants_js__WEBPACK_IMPORTED_MODULE_11__.CALL_HEAD_STARTED && tinode_sdk__WEBPACK_IMPORTED_MODULE_4__.Tinode.isP2PTopicName(data.topic)) {
       const topic = this.tinode.getTopic(data.topic);
       if (topic) {
+        if (topic._delayedLeaveTimer) {
+          clearTimeout(topic._delayedLeaveTimer);
+          topic._delayedLeaveTimer = null;
+        }
         const msg = topic.latestMsgVersion(data.seq) || data;
         if (msg.head && msg.head.webrtc && msg.head.webrtc == _constants_js__WEBPACK_IMPORTED_MODULE_11__.CALL_HEAD_STARTED) {
           if (data.from != this.state.myUserId) {
             if (this.state.callState == _constants_js__WEBPACK_IMPORTED_MODULE_11__.CALL_STATE_NONE) {
+              const audioOnly = !!msg.head.aonly;
               this.setState({
                 callTopic: data.topic,
                 callState: _constants_js__WEBPACK_IMPORTED_MODULE_11__.CALL_STATE_INCOMING_RECEIVED,
                 callSeq: data.seq,
-                callAudioOnly: !!msg.head.aonly
+                callAudioOnly: audioOnly
               });
+              this.showCallNotification(data.topic, data.seq, audioOnly);
             } else {
               this.handleCallHangup(data.topic, data.seq);
             }
@@ -7394,6 +7493,25 @@ class TinodeWeb extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Component 
         }
       } else {
         console.warn("Received vc data message from unknown topic", data.topic);
+      }
+      return;
+    }
+    if (data.from && data.from != this.state.myUserId && (!data.head || !data.head.webrtc)) {
+      const topic = this.tinode.getTopic(data.topic);
+      const archived = topic && topic.isArchived();
+      if (!archived && (document.hidden || this.state.topicSelected != data.topic)) {
+        const senderName = topic && topic.public && topic.public.fn ? topic.public.fn : 'New Message';
+        const avatar = topic && topic.public && topic.public.photo ? (0,_lib_blob_helpers_js__WEBPACK_IMPORTED_MODULE_13__.makeImageUrl)(topic.public.photo) : '/img/logo96.png';
+        const bodyText = typeof data.content === 'string' ? data.content : tinode_sdk__WEBPACK_IMPORTED_MODULE_4__.Drafty.plainText(data.content);
+        if (document.hidden) {
+          this.postToServiceWorker({
+            type: 'new-message',
+            topic: data.topic,
+            title: senderName,
+            body: bodyText,
+            avatar: avatar
+          });
+        }
       }
     }
   }
@@ -8503,9 +8621,21 @@ class CallIncoming extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Compone
     }
     this.resetDesc(topic);
     if (this.props.callState == _constants_js__WEBPACK_IMPORTED_MODULE_4__.CALL_STATE_INCOMING_RECEIVED) {
+      RING_SOUND.currentTime = 0;
       RING_SOUND.play().catch(_ => {});
+      if (navigator.vibrate) {
+        try {
+          navigator.vibrate([500, 250, 500]);
+        } catch (_) {}
+      }
       this.ringTimer = setInterval(_ => {
+        RING_SOUND.currentTime = 0;
         RING_SOUND.play().catch(_ => {});
+        if (navigator.vibrate) {
+          try {
+            navigator.vibrate([500, 250, 500]);
+          } catch (_) {}
+        }
       }, 2000);
       this.props.onRinging(this.props.topic, this.props.seq);
     }
@@ -8530,6 +8660,11 @@ class CallIncoming extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Compone
     if (this.ringTimer != null) {
       clearInterval(this.ringTimer);
       RING_SOUND.pause();
+    }
+    if (navigator.vibrate) {
+      try {
+        navigator.vibrate(0);
+      } catch (_) {}
     }
     const topic = this.props.tinode.getTopic(this.props.topic);
     if (!topic) {
@@ -8566,7 +8701,7 @@ class CallIncoming extends react__WEBPACK_IMPORTED_MODULE_0__["default"].Compone
     }
   }
   handleAcceptCall() {
-    this.props.onAcceptCall(this.props.topic);
+    this.props.onAcceptCall(this.props.topic, true, this.props.seq);
   }
   handleRejectCall() {
     this.props.onReject(this.props.topic, this.props.seq);

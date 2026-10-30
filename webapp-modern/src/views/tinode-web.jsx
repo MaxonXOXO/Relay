@@ -352,13 +352,28 @@ class TinodeWeb extends React.Component {
     this.applyWallpaperSettings(this.state.wallpaper, this.state.wallpaperSize, this.state.wallpaperBlur,
       this.state.colorSchema == 'auto' ? this.state.systemColorSchema : this.state.colorSchema);
 
-    // Process background notifications from the service worker.
+    // Process background notifications and call actions from the service worker.
     if (typeof BroadcastChannel == 'function') {
       const serviceWorkerChannel = new BroadcastChannel('tinode-sw');
       serviceWorkerChannel.addEventListener('message', this.handlePushMessage);
     } else {
-      // Safari is broken by design.
       console.warn("Your browser does not support BroadcastChannel. Some features will not be available");
+    }
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener('message', this.handlePushMessage);
+      navigator.serviceWorker.register('/service-worker.js').then(reg => {
+        this.checkForAppUpdate(reg);
+        const sw = reg.active || reg.installing || reg.waiting;
+        if (sw) {
+          sw.postMessage(JSON.stringify({
+            type: 'config',
+            locale: this.props.intl.locale,
+            version: PACKAGE_VERSION
+          }));
+        }
+      }).catch(err => {
+        console.warn("Service worker registration skipped:", err);
+      });
     }
 
     // Detect if computer just woke up from sleep. Checks how much time has passed since the last tick.
@@ -448,9 +463,58 @@ class TinodeWeb extends React.Component {
     return tinode;
   }
 
-  // Tinode received a push notification from the server.
+  // Tinode received a push notification or call action from the service worker.
   handlePushMessage(payload) {
-    this.tinode.oobNotification(payload.data || {});
+    const data = (payload && payload.data) ? payload.data : payload;
+    if (!data) {
+      return;
+    }
+    if (data.type === 'call-action') {
+      const topic = data.topic || this.state.callTopic;
+      const seq = data.seq || this.state.callSeq;
+      if (data.action === 'decline' && topic) {
+        this.handleCallHangup(topic, seq);
+        this.handleCallClose();
+      } else if (data.action === 'answer' && topic) {
+        this.handleCallAccept(topic, true, seq);
+      } else if (data.action === 'show' && topic) {
+        this.handleTopicSelected(topic);
+      }
+      return;
+    }
+    this.tinode.oobNotification(data);
+  }
+
+  postToServiceWorker(msg) {
+    if (!navigator.serviceWorker) {
+      return;
+    }
+    navigator.serviceWorker.ready.then(reg => {
+      if (reg && reg.active) {
+        reg.active.postMessage(JSON.stringify(msg));
+      }
+    }).catch(_ => {});
+  }
+
+  showCallNotification(topicName, seq, audioOnly) {
+    const topic = this.tinode.getTopic(topicName);
+    const callerName = (topic && topic.public && topic.public.fn) ? topic.public.fn : 'Relay Contact';
+    const avatar = (topic && topic.public && topic.public.photo) ? makeImageUrl(topic.public.photo) : '/img/logo192.png';
+    this.postToServiceWorker({
+      type: 'incoming-call',
+      topic: topicName,
+      seq: seq,
+      callerName: callerName,
+      audioOnly: !!audioOnly,
+      avatar: avatar
+    });
+  }
+
+  closeCallNotification(topicName) {
+    this.postToServiceWorker({
+      type: 'call-ended',
+      topic: topicName
+    });
   }
 
   initFCMessaging() {
@@ -874,6 +938,19 @@ class TinodeWeb extends React.Component {
   handleLoginSuccessful() {
     this.handleError();
 
+    // Request notification permission so incoming calls & messages can alert in background/PWA.
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission().catch(_ => {});
+    }
+
+    // Hold a Web Lock while logged in so mobile/desktop browsers keep the WebSocket alive longer in background.
+    if (navigator.locks && navigator.locks.request && !this._webLockHeld) {
+      this._webLockHeld = true;
+      navigator.locks.request('relay-active-session', () => new Promise(_ => {})).catch(_ => {
+        this._webLockHeld = false;
+      });
+    }
+
     // Refresh authentication token.
     if (LocalStorageUtil.getObject('keep-logged-in')) {
       LocalStorageUtil.setObject('auth-token', this.tinode.getAuthToken());
@@ -969,12 +1046,18 @@ class TinodeWeb extends React.Component {
       const archived = topic && topic.isArchived();
 
       // New message received. Maybe the message is from the current user, then unread is 0.
-      if (cont.unread > 0 && this.state.messageSounds && !archived) {
-        // Skip update if the topic is currently open, otherwise the badge will annoyingly flash.
-        if (document.hidden || this.state.topicSelected != cont.topic) {
-          POP_SOUND.play().catch(_ => {
-            // play() throws if the user did not click the app first: https://goo.gl/xX8pDD.
-          });
+      if (cont.unread > 0) {
+        // Fetch the message data for unsubscribed topics so incoming calls & background notifications trigger immediately!
+        if (!topic || !topic.isSubscribed()) {
+          this.tinode.oobNotification({what: 'msg', topic: cont.topic, seq: cont.seq});
+        }
+        if (this.state.messageSounds && !archived) {
+          // Skip update if the topic is currently open, otherwise the badge will annoyingly flash.
+          if (document.hidden || this.state.topicSelected != cont.topic) {
+            POP_SOUND.play().catch(_ => {
+              // play() throws if the user did not click the app first: https://goo.gl/xX8pDD.
+            });
+          }
         }
       }
       // Reorder contact list to use possibly updated 'touched'.
@@ -2074,6 +2157,7 @@ class TinodeWeb extends React.Component {
     if (this.callTimeoutTimer) {
       clearTimeout(this.callTimeoutTimer);
     }
+    this.closeCallNotification(this.state.callTopic);
     this.setState({
       callTopic: undefined,
       callState: CALL_STATE_NONE,
@@ -2082,25 +2166,36 @@ class TinodeWeb extends React.Component {
   }
 
   handleCallAccept(topicName, setCallTopic, callSeq) {
-    const topic = this.tinode.getTopic(topicName);
+    const targetTopic = topicName || this.state.callTopic;
+    this.closeCallNotification(targetTopic);
+    const topic = this.tinode.getTopic(targetTopic);
     if (!topic) {
       return;
     }
+    if (topic._delayedLeaveTimer) {
+      clearTimeout(topic._delayedLeaveTimer);
+      topic._delayedLeaveTimer = null;
+    }
     if (topic.isSubscribed()) {
-      this.handleTopicSelected(setCallTopic ? topicName : this.state.callTopic);
+      this.handleTopicSelected(setCallTopic ? targetTopic : this.state.callTopic);
       const upd = {
         callState: CALL_STATE_IN_PROGRESS
       };
       if (setCallTopic) {
-        upd.callTopic = topicName;
-        upd.callSeq = callSeq;
+        upd.callTopic = targetTopic;
+        upd.callSeq = callSeq || this.state.callSeq;
       }
       this.setState(upd);
     } else {
       // We need to switch and subscribe to callTopic first.
-      this.setState({
+      const upd = {
         callShouldStart: true,
-      }, _ => this.handleTopicSelected(this.state.callTopic));
+      };
+      if (setCallTopic) {
+        upd.callTopic = targetTopic;
+        upd.callSeq = callSeq || this.state.callSeq;
+      }
+      this.setState(upd, _ => this.handleTopicSelected(targetTopic));
     }
   }
 
@@ -2112,6 +2207,7 @@ class TinodeWeb extends React.Component {
       case 'accept':
         // If another my session has accepted the call.
         if (Tinode.isMeTopicName(info.topic) && this.tinode.isMe(info.from)) {
+          this.closeCallNotification(info.src || this.state.callTopic);
           this.setState({
             callTopic: null,
             callState: CALL_STATE_NONE,
@@ -2138,6 +2234,10 @@ class TinodeWeb extends React.Component {
       // See if we need to display incoming call UI.
       const topic = this.tinode.getTopic(data.topic);
       if (topic) {
+        if (topic._delayedLeaveTimer) {
+          clearTimeout(topic._delayedLeaveTimer);
+          topic._delayedLeaveTimer = null;
+        }
         // Check if a later version of the message exists (which means the call
         // has been either accepted or finished already).
         const msg = topic.latestMsgVersion(data.seq) || data;
@@ -2145,13 +2245,15 @@ class TinodeWeb extends React.Component {
           // This is a legit new call.
           if (data.from != this.state.myUserId) {
             if (this.state.callState == CALL_STATE_NONE) {
-              // Incoming call.
+              const audioOnly = !!msg.head.aonly;
+              // Incoming call: show in-app ringing overlay AND OS/PWA persistent call notification.
               this.setState({
                 callTopic: data.topic,
                 callState: CALL_STATE_INCOMING_RECEIVED,
                 callSeq: data.seq,
-                callAudioOnly: !!msg.head.aonly
+                callAudioOnly: audioOnly
               });
+              this.showCallNotification(data.topic, data.seq, audioOnly);
             } else {
               // Another call is either in progress or being established.
               // Reject the incoming call.
@@ -2161,6 +2263,27 @@ class TinodeWeb extends React.Component {
         }
       } else {
         console.warn("Received vc data message from unknown topic", data.topic);
+      }
+      return;
+    }
+
+    // Show OS notification for incoming regular messages when the app is in background or on another chat.
+    if (data.from && data.from != this.state.myUserId && (!data.head || !data.head.webrtc)) {
+      const topic = this.tinode.getTopic(data.topic);
+      const archived = topic && topic.isArchived();
+      if (!archived && (document.hidden || this.state.topicSelected != data.topic)) {
+        const senderName = (topic && topic.public && topic.public.fn) ? topic.public.fn : 'New Message';
+        const avatar = (topic && topic.public && topic.public.photo) ? makeImageUrl(topic.public.photo) : '/img/logo96.png';
+        const bodyText = typeof data.content === 'string' ? data.content : Drafty.plainText(data.content);
+        if (document.hidden) {
+          this.postToServiceWorker({
+            type: 'new-message',
+            topic: data.topic,
+            title: senderName,
+            body: bodyText,
+            avatar: avatar
+          });
+        }
       }
     }
   }
